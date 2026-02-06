@@ -62,7 +62,7 @@
               python.pkgs.fastapi
               python.pkgs.yt-dlp
               python.pkgs.flask
-
+              python.pkgs.pydantic
             ];
           };
         }
