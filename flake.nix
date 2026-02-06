@@ -1,5 +1,5 @@
 {
-  description = "A Nix-flake-based Python development environment";
+  description = "Music for the bold and free";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
@@ -56,11 +56,13 @@
               venvVersionWarn
             '';
 
-            packages = with python.pkgs; [
-              venvShellHook
-              fastapi-cli
-              fastapi
-              python-multipart
+            packages = [
+              python.pkgs.venvShellHook
+              python.pkgs.fastapi-cli
+              python.pkgs.fastapi
+              python.pkgs.yt-dlp
+              python.pkgs.flask
+
             ];
           };
         }

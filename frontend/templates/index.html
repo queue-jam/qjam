@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stream Aggregator</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body class="container">
+    
+    <h1>Audio Aggregator</h1>
+
+    <form hx-post="/play" hx-target="#player-container" hx-swap="innerHTML">
+        <label for="url">Paste YouTube URL:</label>
+        <input type="text" name="url" placeholder="https://youtube.com/watch?v=..." required>
+        <button type="submit">Play Stream</button>
+    </form>
+
+    <hr>
+
+    <div id="player-container">
+        <p>No audio playing.</p>
+    </div>
+
+</body>
+</html>
