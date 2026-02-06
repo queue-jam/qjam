@@ -1,6 +1,11 @@
-def main() -> None:
-    print("Hello from qjam!")
+from fastapi import FastAPI
 
+app = FastAPI()
 
-if __name__ == "__main__":
-    main()
+@app.get("/")
+def read_root():
+    return {"message": "FastAPI is up and running!"}
+
+@app.get("/test/{get_num}")
+def read_item(item_id: int, q: str = None):
+    return {"get_num": item_id, "q": q}
