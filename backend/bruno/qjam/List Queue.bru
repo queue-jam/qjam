@@ -1,13 +1,17 @@
 meta {
-  name: List Rooms
+  name: List Queue
   type: http
-  seq: 6
+  seq: 8
 }
 
 get {
-  url: {{BASE_URL}}/list
+  url: {{BASE_URL}}/:session_id/queue
   body: none
   auth: inherit
+}
+
+params:path {
+  session_id: 
 }
 
 settings {

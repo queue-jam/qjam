@@ -1,21 +1,17 @@
 meta {
-  name: Delete Room
+  name: List Users
   type: http
-  seq: 3
+  seq: 7
 }
 
-delete {
-  url: {{BASE_URL}}/:session_id
+get {
+  url: {{BASE_URL}}/:session_id/users
   body: none
   auth: inherit
 }
 
 params:path {
   session_id: 368a2d5166bd4fac87cc83eb8ac1a45e
-}
-
-vars:pre-request {
-  session_id: ad4d48b7575f4d9a8210135350ef6133
 }
 
 settings {

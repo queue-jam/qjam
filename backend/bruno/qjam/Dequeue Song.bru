@@ -1,0 +1,25 @@
+meta {
+  name: Dequeue Song
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{BASE_URL}}/:session_id?song_url=yt.com/123&queuer_id=123
+  body: none
+  auth: inherit
+}
+
+params:query {
+  song_url: yt.com/123
+  queuer_id: 123
+}
+
+params:path {
+  session_id: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

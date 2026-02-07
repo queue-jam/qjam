@@ -1,0 +1,25 @@
+meta {
+  name: Queue Song
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{BASE_URL}}/:session_id?song_url=yt.com/123&queuer_id=123
+  body: none
+  auth: inherit
+}
+
+params:query {
+  song_url: yt.com/123
+  queuer_id: 123
+}
+
+params:path {
+  session_id: 20f33c130e0d410f8e8b2358d6d71069
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

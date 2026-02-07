@@ -1,13 +1,18 @@
 meta {
   name: Create Room
   type: http
-  seq: 1
+  seq: 2
 }
 
-get {
-  url: {{BASE_URL}}/new
+post {
+  url: {{BASE_URL}}/new?host_id=123&host_name=Blake
   body: none
   auth: inherit
+}
+
+params:query {
+  host_id: 123
+  host_name: Blake
 }
 
 settings {
