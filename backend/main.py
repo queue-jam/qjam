@@ -1,13 +1,22 @@
 import logging
+import re
 import uuid
-from typing import Any
+from typing import Any, Dict, List
 
 import yt_dlp
-from fastapi import FastAPI, Form, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import (
+    FastAPI,
+    Form,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from typing import List, Dict
+from fastapi.templating import Jinja2Templates
+
 from backend.types import Room, Song, User
 
 from .types import Room, Song, User
@@ -53,14 +62,13 @@ def read_root(request: Request):
 
     return response
 
+
 @app.post("/play", response_class=HTMLResponse)
 async def play_stream(request: Request):
     """
     HTMX Endpoint: Returns the styled audio player fragment.
     """
     session_id = request.cookies.get("session_id")
-    
-    # ... (Your existing logic to get room and validate queue) ...
     current_room = Room.get_room_from_session_id(session_id, rooms)
     if not current_room.queue:
         return "<p style='padding: 20px; text-align: center; color: #aaa;'>Queue is empty. Add a song first!</p>"
@@ -77,15 +85,13 @@ async def play_stream(request: Request):
             "request": request,
             "stream_url": direct_stream_url,
             "title": current_room.current_song.title,
-            "artist": current_room.current_song.artist, # Ensure your Song object has this, or use "Unknown"
+            "artist": current_room.current_song.artist, 
             "album_art": current_room.current_song.album_art
         })
 
     except Exception as e:
         logger.error(f"Error fetching audio: {e}")
         return f"<p style='color:red; padding: 20px;'>Error fetching audio: {str(e)}</p>"
-
-
     
     
 @app.post("/{session_id}/queue", response_class=HTMLResponse)
@@ -104,12 +110,12 @@ async def add_to_queue(request: Request, session_id: str, url: str = Form(...)):
     return ""
  
 
-@app.post("/room", response_class=HTMLResponse)
-def jam_room(request: Request, username: str = Form(...)):
+@app.post("/init", response_class=HTMLResponse)
+def initialize_room(request: Request, username: str = Form(...)):        
     user_id: str = request.cookies.get("user_id")
     if not user_id:
         raise HTTPException(status_code=400, detail="No user ID found in cookies")
-
+    
     new_room: Room = create_room(host_id=user_id, host_name=username)
     current_user: User = User.get_user_from_id(user_id, new_room.users)
     response: Any = templates.TemplateResponse("room.html", {
@@ -121,25 +127,37 @@ def jam_room(request: Request, username: str = Form(...)):
     
     return response
 
+    
 @app.post("/join", response_class=HTMLResponse)
 def join_room(request: Request, session_id: str = Form(...), username: str = Form(...)):
     user_id: str = request.cookies.get("user_id")
     if not user_id:
         raise HTTPException(status_code=400, detail="No user ID found in cookies")
     
-    current_room: Room = Room.get_room_from_session_id(session_id, rooms)
-    current_user: User = User(id=user_id, name=username, host=False)
-    current_room.users.append(current_user)
+    current_room: Room
+    try:
+        current_room = Room.get_room_from_session_id(session_id, rooms)    
+    except Exception:
+        return RedirectResponse(url="/", status_code=303)
+    
+    current_user: User
+    try:
+        current_user = User.get_user_from_id(user_id, current_room.users)
+    except ValueError:
+        current_user = User(id=user_id, name=username, host=False)
+        current_room.users.append(current_user)
+    except Exception:
+        return RedirectResponse(url="/", status_code=303)
+        
     response: Any = templates.TemplateResponse("room.html", {
         "request": request, 
         "room": current_room,
         "user": current_user,
     })
-    response.set_cookie(key="session_id", value=current_room.session_id, httponly=True)
-    
+    response.set_cookie(key="session_id", value=session_id, httponly=True)
+
     return response
     
-
 
 def create_room(host_id: str, host_name: str) -> Room:
     room: Room = Room(
@@ -152,6 +170,7 @@ def create_room(host_id: str, host_name: str) -> Room:
     rooms.append(room)
     return room
 
+
 def delete_room(session_id: str) -> None:
     try:
         rooms.remove(Room.get_room_from_session_id(session_id, rooms))
@@ -160,15 +179,11 @@ def delete_room(session_id: str) -> None:
     except Exception:
         raise HTTPException(status_code=400, detail="Unknown server error")
 
-async def queue_song(session_id: str, song_url: str, queuer_id: str) -> None:
 
+async def queue_song(session_id: str, song_url: str, queuer_id: str) -> None:
     current_room = Room.get_room_from_session_id(session_id, rooms)
     queuer = User.get_user_from_id(queuer_id, current_room.users)
-
-    # FIXME
-    # if not queuer.host:
-    #     raise HTTPException(status_code=403, detail="Bad queue permissions")
-
+    
     ydl_opts = {
         'quiet': True,      
         'skip_download': True,
@@ -199,6 +214,7 @@ async def queue_song(session_id: str, song_url: str, queuer_id: str) -> None:
     
     current_room.queue.append(song)
 
+
 # @app.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def dequeue_song(session_id: str, song_url: str, dequeuer_id: str) -> None:
     current_room: Room = Room.get_room_from_session_id(session_id, rooms)
@@ -213,13 +229,16 @@ async def dequeue_song(session_id: str, song_url: str, dequeuer_id: str) -> None
 
     await broadcast_queue(session_id)
     
+    
 def list_users(session_id: str) -> list[User]:
     current_room: Room = Room.get_room_from_session_id(session_id, rooms)
     return current_room.users
 
+
 def list_queue(session_id: str) -> list[Song]:
     current_room: Room = Room.get_room_from_session_id(session_id, rooms)
     return current_room.queue
+
 
 @app.get("/{session_id}/queue", response_class=HTMLResponse)
 async def get_queue_partial(request: Request, session_id: str):
@@ -229,7 +248,6 @@ async def get_queue_partial(request: Request, session_id: str):
         "partials/queue_items.html",
         {"request": request, "queue": queue},
     )
-
 
 
 def search_youtube(query: str):
@@ -246,6 +264,7 @@ def search_youtube(query: str):
             return info.get('entries', [])
         except Exception:
             return []
+
 
 @app.post("/search", response_class=HTMLResponse)
 async def search_videos(request: Request, query: str = Form(...)):
@@ -314,6 +333,7 @@ def serialize_user(user: User) -> dict:
         "host": user.host
     }
 
+
 def serialize_song(song: Song) -> dict:
     return {
         "id": song.name,
@@ -323,7 +343,6 @@ def serialize_song(song: Song) -> dict:
         "added_by": song.added_by.name,
         "album_art": song.album_art,
     }
-
 
 
 async def broadcast_queue(session_id: str):
