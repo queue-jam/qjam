@@ -289,8 +289,8 @@ async def queue_ws(websocket: WebSocket, session_id: str):
             data = await websocket.receive_json()
 
             if data["type"] == "reorder":
-                new_order = data["order"] 
-                
+                new_order = data["order"]  # list of song IDs
+
                 id_map = {song.name: song for song in room.queue}
 
                 room.queue = [

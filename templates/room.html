@@ -855,68 +855,112 @@
             </div>
         </div>
 
-        <script>
-            const roomId = "{{ room.session_id }}";
-            const queueList = document.getElementById("queue-list");
+    <script>
+    const roomId = "{{ room.session_id }}";
+    const queueList = document.getElementById("queue-list");
 
-            const socket = new WebSocket(
-                `ws://${window.location.host}/ws/${roomId}`,
-            );
+    const socket = new WebSocket(`ws://${window.location.host}/ws/${roomId}`);
 
-            socket.onmessage = (event) => {
-                const queue = JSON.parse(event.data);
-                renderQueue(queue);
-            };
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      renderQueue(data.queue);
+      renderNowPlaying(data.now_playing)
+    };
 
-            function renderQueue(queue) {
-                queueList.innerHTML = "";
+    function renderNowPlaying(song) {
+      const artContainer = document.getElementById("now-playing-art");
+      const titleElement = document.getElementById("main-title");
+      const artistElement = document.getElementById("main-artist");
+      const backgroundElement = document.getElementById("ambient-background"); // <--- New
 
-                queue.forEach((item) => {
-                    const li = document.createElement("li");
+      if (!song) {
+	artContainer.innerHTML = `
+<div style="width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+  🎵
+</div>`;
 
-                    // FIX: Apply styles using JavaScript, not raw HTML
-                    li.style.cssText =
-                        "display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #333; align-items: center;";
+	if (titleElement) titleElement.innerText = "No song playing";
+	if (artistElement) artistElement.innerText = "";
 
-                    li.dataset.id = item.id;
+	if (backgroundElement) {
+	  backgroundElement.innerHTML = '<div class="vignette"></div>';
+	}
+	return;
+      }
 
-                    // Use a template literal to build the inner HTML (Image is here)
-                    li.innerHTML = `
-      <img src="${item.album_art || "https://placehold.co/60"}" 
-           alt="Cover"
-           style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px; flex-shrink: 0; margin-right: 10px;"/>
-      
-      <div style="min-width: 0;">
-        <div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-          ${item.title}
-        </div>
-        <div style="font-size: 0.8em; color: #888;">
-          ${item.artist ?? "Unknown Artist"}
-        </div>
-        <div style="font-size: 0.7em; color: #555;">
-          Added by: ${item.added_by?.name ?? "System"}
-        </div>
-      </div>
-    `;
 
-                    queueList.appendChild(li);
-                });
-            }
-            Sortable.create(queueList, {
-                animation: 150,
-                onEnd: () => {
-                    const newOrder = Array.from(queueList.children).map(
-                        (li) => li.dataset.id,
-                    );
+      if (song.album_art) {
+	artContainer.innerHTML = `
+<img src="${song.album_art}" 
+  alt="Album Art" 
+  style="width: 100%; height: 100%; object-fit: cover;">`;
+      } else {
+	artContainer.innerHTML = `
+<div style="width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+  🎵
+</div>`;
+      }
 
-                    socket.send(
-                        JSON.stringify({
-                            type: "reorder",
-                            order: newOrder,
-                        }),
-                    );
-                },
-            });
-        </script>
+      if (backgroundElement) {
+	if (song.album_art) {
+	  backgroundElement.innerHTML = `
+<img src="${song.album_art}" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: -1;">
+<div class="vignette"></div>
+`;
+	} else {
+	  backgroundElement.innerHTML = '<div class="vignette"></div>';
+	}
+      }
+
+      if (titleElement) titleElement.innerText = song.title;
+      if (artistElement) artistElement.innerText = song.artist;
+    }
+    function renderQueue(queue) {
+      queueList.innerHTML = "";
+
+      queue.forEach(item => {
+	const li = document.createElement("li");
+
+	li.style.cssText = "display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #333; align-items: center;";
+
+	li.dataset.id = item.id;
+
+	li.innerHTML = `
+<img src="${item.album_art || 'https://placehold.co/60'}" 
+  alt="Cover"
+  style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px; flex-shrink: 0; margin-right: 10px;"/>
+
+
+
+<div style="min-width: 0;">
+  <div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+    ${item.title}
+  </div>
+  <div style="font-size: 0.8em; color: #888;">
+    ${item.artist ?? "Unknown Artist"}
+  </div>
+  <div style="font-size: 0.7em; color: #555;">
+    Added by: ${item.added_by?.name ?? "System"}
+  </div>
+</div>
+`;
+
+	queueList.appendChild(li);
+      });
+    }
+    Sortable.create(queueList, {
+      animation: 150,
+      onEnd: () => {
+	const newOrder = Array.from(queueList.children).map(
+	  li => li.dataset.id
+	);
+
+	socket.send(JSON.stringify({
+	  type: "reorder",
+	  order: newOrder
+	}));
+      }
+    });
+    </script>
     </body>
 </html>
