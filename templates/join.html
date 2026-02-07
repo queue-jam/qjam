@@ -1,62 +1,73 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Join Room</title>
     <style>
-        body { 
-            background: #050505; 
-            color: white; 
-            font-family: system-ui, -apple-system, sans-serif; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            margin: 0; 
-        }
-        .card { 
-            background: #1a1a1a; 
-            padding: 40px; 
-            border-radius: 20px; 
-            text-align: center; 
-            border: 1px solid #333; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            max-width: 90%;
-            width: 300px;
-        }
-        input { 
-            width: 100%; 
-            padding: 12px; 
-            margin: 15px 0; 
-            border-radius: 8px; 
-            border: 1px solid #333; 
-            background: #000; 
-            color: white; 
-            box-sizing: border-box;
-        }
-        button { 
-            background: white; 
-            color: black; 
-            border: none; 
-            padding: 12px 24px; 
-            border-radius: 24px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            width: 100%;
-        }
-        h2 { margin-top: 0; }
+      body {
+        background: #050505;
+        color: white;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .card {
+        background: #1a1a1a;
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        border: 1px solid #333;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        max-width: 90%;
+        width: 300px;
+      }
+      input {
+        width: 100%;
+        padding: 12px;
+        margin: 15px 0;
+        border-radius: 8px;
+        border: 1px solid #333;
+        background: #000;
+        color: white;
+        box-sizing: border-box;
+      }
+      button {
+        background: white;
+        color: black;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 24px;
+        font-weight: 800;
+        cursor: pointer;
+        width: 100%;
+      }
+      h2 {
+        margin-top: 0;
+      }
     </style>
   </head>
   <body>
     <div class="card">
-        <form action="/join" method="post">
-            <h2>Join Party</h2>
-            <p style="color:#aaa; font-size: 0.9em;">Room Code: {{ code }}</p>
-            <input type="hidden" name="session_id" value="{{ code }}">
-            <input type="text" name="username" placeholder="Enter your display name" required autofocus>
-            <button type="submit">Join</button>
-        </form>
+      <form action="/join" method="post">
+        <h2>Join Party</h2>
+        <p style="color: #aaa; font-size: 0.9em">Room Code: {{ code }}</p>
+        <input type="hidden" name="session_id" value="{{ code }}" />
+        <input
+          type="text"
+          name="username"
+          placeholder="Enter your display name"
+          required
+          autofocus
+        />
+        <button type="submit">Join</button>
+      </form>
     </div>
   </body>
 </html>

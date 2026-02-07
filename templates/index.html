@@ -1,291 +1,343 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QJam | The Open Source Party Playlist</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <link rel="icon" href="/static/M.ico" type="image/x-icon">
-    
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="/static/M.ico" type="image/x-icon" />
+
     <style>
-        /* --- DESIGN SYSTEM --- */
-        :root {
-            --bg-color: #030303;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --accent-violet: #8b5cf6;
-            --accent-glow: rgba(139, 92, 246, 0.4);
-            --text-main: #ffffff;
-            --text-muted: #888888;
-        }
+      /* --- DESIGN SYSTEM --- */
+      :root {
+        --bg-color: #030303;
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --accent-violet: #8b5cf6;
+        --accent-glow: rgba(139, 92, 246, 0.4);
+        --text-main: #ffffff;
+        --text-muted: #888888;
+      }
 
-        body {
-            margin: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(50, 50, 50, 0.3) 0%, transparent 40%);
-        }
+      body {
+        margin: 0;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        font-family: "Inter", sans-serif;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background-image:
+          radial-gradient(
+            circle at 10% 20%,
+            rgba(139, 92, 246, 0.15) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 90% 80%,
+            rgba(50, 50, 50, 0.3) 0%,
+            transparent 40%
+          );
+      }
 
-        /* --- LAYOUT GRID --- */
+      /* --- LAYOUT GRID --- */
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 90%;
+        max-width: 1200px;
+        height: 80vh;
+        max-height: 700px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        backdrop-filter: blur(40px);
+        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+        overflow: hidden;
+      }
+
+      /* --- LEFT PANEL: THE PITCH --- */
+      .brand-panel {
+        padding: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-right: 1px solid var(--glass-border);
+        position: relative;
+      }
+
+      .brand-logo {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        display: block;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.3));
+      }
+
+      h1 {
+        font-size: 5rem;
+        font-weight: 900;
+        margin: 0;
+        letter-spacing: -3px;
+        background: linear-gradient(to right, #fff, #aaa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 0.9;
+      }
+
+      .tagline {
+        font-size: 1.5rem;
+        color: var(--accent-violet);
+        font-weight: 600;
+        margin-top: 10px;
+        letter-spacing: -0.5px;
+      }
+
+      .description {
+        margin-top: 30px;
+        line-height: 1.6;
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        max-width: 400px;
+      }
+
+      .features {
+        display: flex;
+        gap: 20px;
+        margin-top: 40px;
+      }
+      .feature-pill {
+        padding: 8px 16px;
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #ccc;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      /* --- RIGHT PANEL: THE CONTROL DECK --- */
+      .login-panel {
+        padding: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.2);
+        position: relative;
+      }
+
+      /* The Toggle Switch (Host vs Join) */
+      .mode-switch {
+        display: flex;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 5px;
+        border-radius: 12px;
+        margin-bottom: 40px;
+        width: fit-content;
+        border: 1px solid var(--glass-border);
+      }
+      .mode-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        padding: 12px 30px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: 0.2s;
+      }
+      .mode-btn.active {
+        background: var(--text-main);
+        color: black;
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+      }
+
+      /* Hardware-Style Input Fields */
+      .input-group {
+        margin-bottom: 25px;
+      }
+      label {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        font-weight: 700;
+      }
+
+      /* Inputs that look like LCD screens */
+      input[type="text"] {
+        width: 100%;
+        padding: 20px;
+        background: #0a0a0a;
+        border: 1px solid #333;
+        border-left: 4px solid #333; /* Accent bar */
+        color: var(--accent-violet);
+        font-family: "Courier New", monospace; /* Digital look */
+        font-weight: 700;
+        font-size: 1.2rem;
+        outline: none;
+        box-sizing: border-box;
+        border-radius: 4px;
+        transition: 0.2s;
+      }
+      input[type="text"]:focus {
+        border-color: var(--accent-violet);
+        border-left-color: var(--accent-violet);
+        box-shadow: 0 0 20px var(--accent-glow);
+      }
+
+      /* The "Power" Button */
+      button[type="submit"] {
+        width: 100%;
+        padding: 20px;
+        margin-top: 10px;
+        background: var(--accent-violet);
+        color: white;
+        border: none;
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        clip-path: polygon(
+          10px 0,
+          100% 0,
+          100% calc(100% - 10px),
+          calc(100% - 10px) 100%,
+          0 100%,
+          0 10px
+        ); /* Sci-fi corner cut */
+        transition: 0.2s;
+      }
+      button[type="submit"]:hover {
+        filter: brightness(1.2);
+        transform: translateY(-2px);
+      }
+
+      /* --- UTILITIES --- */
+      .hidden {
+        display: none;
+      }
+
+      /* Mobile adjustment */
+      @media (max-width: 900px) {
         .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            width: 90%;
-            max-width: 1200px;
-            height: 80vh;
-            max-height: 700px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            backdrop-filter: blur(40px);
-            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
-            overflow: hidden;
+          grid-template-columns: 1fr;
+          height: auto;
+          max-height: none;
+          overflow-y: auto;
         }
-
-        /* --- LEFT PANEL: THE PITCH --- */
         .brand-panel {
-            padding: 60px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            border-right: 1px solid var(--glass-border);
-            position: relative;
+          padding: 40px;
+          border-right: none;
+          border-bottom: 1px solid var(--glass-border);
         }
-
-        .brand-logo {
-            width: 100%;
-            max-width: 300px;
-            height: auto;
-            display: block;
-            margin-bottom: 10px;
-            filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.3)); 
-        }
-
         h1 {
-            font-size: 5rem;
-            font-weight: 900;
-            margin: 0;
-            letter-spacing: -3px;
-            background: linear-gradient(to right, #fff, #aaa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 0.9;
+          font-size: 3rem;
         }
-
-        .tagline {
-            font-size: 1.5rem;
-            color: var(--accent-violet);
-            font-weight: 600;
-            margin-top: 10px;
-            letter-spacing: -0.5px;
-        }
-
-        .description {
-            margin-top: 30px;
-            line-height: 1.6;
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            max-width: 400px;
-        }
-
-        .features {
-            display: flex;
-            gap: 20px;
-            margin-top: 40px;
-        }
-        .feature-pill {
-            padding: 8px 16px;
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            font-size: 0.85rem;
-            color: #ccc;
-            background: rgba(255,255,255,0.02);
-        }
-
-        /* --- RIGHT PANEL: THE CONTROL DECK --- */
-        .login-panel {
-            padding: 60px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: rgba(0,0,0,0.2);
-            position: relative;
-        }
-
-        /* The Toggle Switch (Host vs Join) */
-        .mode-switch {
-            display: flex;
-            background: rgba(0,0,0,0.5);
-            padding: 5px;
-            border-radius: 12px;
-            margin-bottom: 40px;
-            width: fit-content;
-            border: 1px solid var(--glass-border);
-        }
-        .mode-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            padding: 12px 30px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: 0.2s;
-        }
-        .mode-btn.active {
-            background: var(--text-main);
-            color: black;
-            box-shadow: 0 4px 15px rgba(255,255,255,0.2);
-        }
-
-        /* Hardware-Style Input Fields */
-        .input-group {
-            margin-bottom: 25px;
-        }
-        label {
-            display: block;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-        
-        /* Inputs that look like LCD screens */
-        input[type="text"] {
-            width: 100%;
-            padding: 20px;
-            background: #0a0a0a;
-            border: 1px solid #333;
-            border-left: 4px solid #333; /* Accent bar */
-            color: var(--accent-violet);
-            font-family: 'Courier New', monospace; /* Digital look */
-            font-weight: 700;
-            font-size: 1.2rem;
-            outline: none;
-            box-sizing: border-box;
-            border-radius: 4px;
-            transition: 0.2s;
-        }
-        input[type="text"]:focus {
-            border-color: var(--accent-violet);
-            border-left-color: var(--accent-violet);
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-
-        /* The "Power" Button */
-        button[type="submit"] {
-            width: 100%;
-            padding: 20px;
-            margin-top: 10px;
-            background: var(--accent-violet);
-            color: white;
-            border: none;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); /* Sci-fi corner cut */
-            transition: 0.2s;
-        }
-        button[type="submit"]:hover {
-            filter: brightness(1.2);
-            transform: translateY(-2px);
-        }
-
-        /* --- UTILITIES --- */
-        .hidden { display: none; }
-        
-        /* Mobile adjustment */
-        @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; height: auto; max-height: none; overflow-y: auto; }
-            .brand-panel { padding: 40px; border-right: none; border-bottom: 1px solid var(--glass-border); }
-            h1 { font-size: 3rem; }
-        }
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <div class="container">
-        
-        <div class="brand-panel">
-            <img src="/static/logo.png" alt="QJAM" class="brand-logo">
-            <div class="tagline">Queue. Jam. Repeat.</div>
-            
-            <p class="description">
-                The open-source alternative to Spotify Jams. 
-                <br><br>
-                <strong>No accounts required.</strong><br>
-                Just create a room, share the link, and let anyone add tracks to the queue instantly.
-            </p>
+      <div class="brand-panel">
+        <img src="/static/logo.png" alt="QJAM" class="brand-logo" />
+        <div class="tagline">Queue. Jam. Repeat.</div>
 
-            <div class="features">
-                <div class="feature-pill">Browser Based</div>
-                <div class="feature-pill">Instant Sync</div>
-                <div class="feature-pill">Anonymized</div>
-            </div>
+        <p class="description">
+          The open-source alternative to Spotify Jams.
+          <br /><br />
+          <strong>No accounts required.</strong><br />
+          Just create a room, share the link, and let anyone add tracks to the
+          queue instantly.
+        </p>
+
+        <div class="features">
+          <div class="feature-pill">Browser Based</div>
+          <div class="feature-pill">Instant Sync</div>
+          <div class="feature-pill">Anonymized</div>
+        </div>
+      </div>
+
+      <div class="login-panel">
+        <div class="mode-switch">
+          <button class="mode-btn active" onclick="switchMode('host')">
+            Host Room
+          </button>
+          <button class="mode-btn" onclick="switchMode('join')">
+            Join Room
+          </button>
         </div>
 
-        <div class="login-panel">
-            
-            <div class="mode-switch">
-                <button class="mode-btn active" onclick="switchMode('host')">Host Room</button>
-                <button class="mode-btn" onclick="switchMode('join')">Join Room</button>
-            </div>
+        <form id="host-form" action="/room" method="post">
+          <div class="input-group">
+            <label for="host-username">HOST IDENTITY</label>
+            <input
+              type="text"
+              id="host-username"
+              name="username"
+              placeholder="DISPLAY NAME"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <button type="submit">INITIALIZE ROOM</button>
+        </form>
 
-            <form id="host-form" action="/room" method="post">
-                <div class="input-group">
-                    <label for="host-username">HOST IDENTITY</label>
-                    <input type="text" id="host-username" name="username" placeholder="DISPLAY NAME" required autocomplete="off">
-                </div>
-                <button type="submit">INITIALIZE ROOM</button>
-            </form>
-
-            <form id="join-form" action="/join" method="post" class="hidden">
-                <div class="input-group">
-                    <label for="join-username">GUEST IDENTITY</label>
-                    <input type="text" id="join-username" name="username" placeholder="DISPLAY NAME" required autocomplete="off">
-                </div>
-                <div class="input-group">
-                    <label for="session_id">TARGET FREQUENCY</label>
-                    <input type="text" id="session_id" name="session_id" placeholder="ROOM ID" required autocomplete="off">
-                </div>
-                <button type="submit">CONNECT TO SIGNAL</button>
-            </form>
-
-        </div>
-
+        <form id="join-form" action="/join" method="post" class="hidden">
+          <div class="input-group">
+            <label for="join-username">GUEST IDENTITY</label>
+            <input
+              type="text"
+              id="join-username"
+              name="username"
+              placeholder="DISPLAY NAME"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <div class="input-group">
+            <label for="session_id">TARGET FREQUENCY</label>
+            <input
+              type="text"
+              id="session_id"
+              name="session_id"
+              placeholder="ROOM ID"
+              required
+              autocomplete="off"
+            />
+          </div>
+          <button type="submit">CONNECT TO SIGNAL</button>
+        </form>
+      </div>
     </div>
 
     <script>
-        function switchMode(mode) {
-            const hostForm = document.getElementById('host-form');
-            const joinForm = document.getElementById('join-form');
-            const btns = document.querySelectorAll('.mode-btn');
+      function switchMode(mode) {
+        const hostForm = document.getElementById("host-form");
+        const joinForm = document.getElementById("join-form");
+        const btns = document.querySelectorAll(".mode-btn");
 
-            if (mode === 'host') {
-                hostForm.classList.remove('hidden');
-                joinForm.classList.add('hidden');
-                btns[0].classList.add('active');
-                btns[1].classList.remove('active');
-            } else {
-                hostForm.classList.add('hidden');
-                joinForm.classList.remove('hidden');
-                btns[0].classList.remove('active');
-                btns[1].classList.add('active');
-            }
+        if (mode === "host") {
+          hostForm.classList.remove("hidden");
+          joinForm.classList.add("hidden");
+          btns[0].classList.add("active");
+          btns[1].classList.remove("active");
+        } else {
+          hostForm.classList.add("hidden");
+          joinForm.classList.remove("hidden");
+          btns[0].classList.remove("active");
+          btns[1].classList.add("active");
         }
+      }
     </script>
-</body>
+  </body>
 </html>

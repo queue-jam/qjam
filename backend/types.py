@@ -1,9 +1,15 @@
 from pydantic import BaseModel
 
+
 class User(BaseModel):
     id: str
     name: str
-    host: bool
+    
+    host: bool = False
+    can_play: bool = False
+    can_queue: bool = False
+    can_dequeue: bool = False
+    can_change_order: bool = False
 
     @classmethod
     def get_user_from_id(cls, id: str, users: list["User"]) -> "User":
@@ -11,6 +17,7 @@ class User(BaseModel):
             if user.id == id:
                 return user
         raise ValueError(f"User ID '{id}' was not in known users")
+
 
 class Song(BaseModel):
     name: str   
@@ -26,6 +33,7 @@ class Song(BaseModel):
             if song.yt_url == yt_url:
                 return song
         raise ValueError(f"YT URL '{yt_url}' was not in queued songs")
+
 
 class Room(BaseModel):
     session_id: str

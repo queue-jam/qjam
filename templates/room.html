@@ -556,6 +556,200 @@
         <button id="open-permissions-btn">
           Hi, {{ user.name }}!
         </button>
+      <div class="greet-permissions-container">
+        <button id="open-permissions-btn">Hi, {{ user.name }}!</button>
+        <dialog id="permissions-dialog">
+          {% if user.host %}
+          <span class="is-host-text"
+            ><h2>You are the host of the room!</h2></span
+          >
+          {% else %}
+          <span class="is-guest-text"
+            ><h2>You are a guest of the room!</h2></span
+          >
+          {% endif %} {% if user.host or user.can_play %}
+          <span class="can-play-text">✅ You can play songs</span>
+          {% else %}
+          <span class="cannot-play-text">❌ You cannot play songs</span>
+          {% endif %} {% if user.host or user.can_queue %}
+          <span class="can-queue-text">✅ You can queue songs</span>
+          {% else %}
+          <span class="cannot-queue-text">❌ You cannot queue songs</span>
+          {% endif %} {% if user.host or user.can_dequeue %}
+          <span class="can-dequeue-text">✅ You can dequeue songs</span>
+          {% else %}
+          <span class="cannot-dequeue-text">❌ You cannot dequeue songs</span>
+          {% endif %} {% if user.host or user.can_change_order %}
+          <span class="can-change-order-text"
+            >✅ You can change the queue order</span
+          >
+          {% else %}
+          <span class="cannot-change-order-text"
+            >❌ You cannot change the queue order</span
+          >
+          {% endif %}
+
+          <button id="close-permissions-btn">Close</button>
+        </dialog>
+        <script>
+          const permissions_dialog =
+            document.getElementById("permissions-dialog");
+
+          document
+            .getElementById("open-permissions-btn")
+            .addEventListener("click", () => permissions_dialog.showModal());
+
+          document
+            .getElementById("close-permissions-btn")
+            .addEventListener("click", () => permissions_dialog.close());
+        </script>
+        <style>
+          #open-permissions-btn {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.05),
+              0 8px 20px rgba(0, 0, 0, 0.35);
+
+            transition:
+              background 0.2s ease,
+              transform 0.1s ease,
+              box-shadow 0.2s ease;
+          }
+
+          #open-permissions-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.08),
+              0 12px 28px rgba(0, 0, 0, 0.45);
+          }
+
+          #open-permissions-btn:active {
+            transform: scale(0.96);
+          }
+
+          #open-permissions-btn:focus-visible {
+            outline: none;
+            box-shadow:
+              0 0 0 2px rgba(255, 255, 255, 0.35),
+              0 12px 28px rgba(0, 0, 0, 0.5);
+          }
+
+          /* --- Permission Rows --- */
+          #permissions-dialog span {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            margin-bottom: 12px;
+            padding: 10px 14px;
+
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+            backdrop-filter: blur(10px);
+          }
+
+          /* Remove extra space after last item */
+          #permissions-dialog span:last-of-type {
+            margin-bottom: 22px;
+          }
+
+          /* --- Host / Guest Messaging --- */
+          #permissions-dialog h2 {
+            margin: 0 0 5px 0;
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-align: center;
+          }
+
+          /* --- Positive Permissions --- */
+          .can-dequeue-text,
+          .can-queue-text,
+          .can-change-order-text,
+          .can-play-text {
+            color: #a8e6c1;
+            text-shadow: 0 0 10px rgba(168, 230, 193, 0.2);
+          }
+
+          /* --- Negative Permission --- */
+          .cannot-dequeue-text,
+          .cannot-queue-text,
+          .cannot-change-order-text,
+          .cannot-play-text {
+            color: #ff9b9b;
+            background: rgba(255, 80, 80, 0.08);
+            border-color: rgba(255, 120, 120, 0.18);
+
+            text-shadow: 0 0 10px rgba(255, 120, 120, 0.25);
+          }
+
+          .is-host-text,
+          .is-guest-text {
+            display: block;
+            justify-content: center; /* horizontal */
+            text-align: center;
+            margin-bottom: 16px;
+          }
+
+          /* Host = subtle positive glow */
+          .is-host-text h2 {
+            color: #9fe6b8;
+            text-shadow: 0 0 18px rgba(159, 230, 184, 0.25);
+          }
+
+          /* Guest = neutral / informational */
+          .is-guest-text h2 {
+            color: rgba(255, 255, 255, 0.85);
+          }
+
+          /* --- Dialog Button --- */
+          #permissions-dialog button {
+            display: block;
+            margin: 0 auto;
+
+            background: white;
+            color: black;
+
+            border: none;
+            border-radius: 24px;
+            padding: 10px 22px;
+
+            font-weight: 700;
+            cursor: pointer;
+
+            transition:
+              transform 0.1s ease,
+              filter 0.2s ease;
+          }
+
+          #permissions-dialog button:hover {
+            filter: brightness(0.9);
+          }
+
+          #permissions-dialog button:active {
+            transform: scale(0.96);
+          }
+        </style>
       </div>
 
       <div class="search-container">
@@ -590,6 +784,271 @@
 
       <div class="header-controls-right">
         <button id="open-dialog-btn">Invite</button>
+
+        <dialog id="invite-dialog">
+          <h2>Invite friends!</h2>
+          <p>
+            <b>Code:</b>
+            <span style="font-family: monospace; font-size: 1.1em"
+              >{{ room.session_id }}</span
+            >
+          </p>
+
+          <div id="qrcode-wrapper">
+            <div id="qrcode"></div>
+          </div>
+
+          <div id="user-list-container">
+            {% for user in room.users %}
+              {% if user.host %}
+                <span class="is-host-text">{{ user.name }} (host)</span>
+              {% else %}
+                <div class="guest-button-dialog" data-user-id="{{ user.id }}">
+                  <button class="is-guest-text">{{ user.name }} (guest)</button>
+
+                  <dialog class="guest-dialog">
+                    <button data-action="can_play">Toggle can-play</button>
+                    <button data-action="can_queue">Toggle can-queue</button>
+                    <button data-action="can_dequeue">Toggle can-dequeue</button>
+                    <button data-action="can_change_order">Toggle can-change-order</button>
+                    <button class="close-guest-dialog-btn">Close</button>
+                  </dialog>
+                </div>
+                <script>
+                  const roomId = {{ room.session_id | tojson }};
+
+                  document.querySelectorAll(".guest-button-dialog").forEach(container => {
+                    const userId = container.dataset.userId;
+                    const dialog = container.querySelector(".guest-dialog");
+
+                    container.querySelector(".is-guest-text")
+                      .addEventListener("click", () => dialog.showModal());
+
+                    container.querySelector(".close-guest-dialog-btn")
+                      .addEventListener("click", () => dialog.close());
+
+                    container.querySelectorAll("[data-action]").forEach(btn => {
+                      btn.addEventListener("click", () => {
+                        const action = btn.dataset.action;
+
+                        fetch(`/room/${roomId}/users/${userId}/${action}`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ value: true }),
+                        });
+                      });
+                    });
+                  });
+                </script>
+              {% endif %}
+            {% endfor %}            
+          </div>
+          <br />
+          <button id="close-dialog-btn">Close</button>
+        </dialog>
+
+        <script>
+          const invite_dialog = document.getElementById("invite-dialog");
+          const qrContainer = document.getElementById("qrcode");
+
+          document
+            .getElementById("open-dialog-btn")
+            .addEventListener("click", () => {
+              invite_dialog.showModal();
+
+              // Generate QR only if not already generated
+              if (qrContainer.innerHTML.trim() === "") {
+                // Constructs: http://host:port/join?code=SESSION_ID
+                const joinUrl = `${window.location.origin}/join?code={{ room.session_id }}`;
+
+                new QRCode(qrContainer, {
+                  text: joinUrl,
+                  width: 160,
+                  height: 160,
+                  colorDark: "#000000",
+                  colorLight: "#ffffff",
+                  correctLevel: QRCode.CorrectLevel.H,
+                });
+              }
+            });
+
+          document
+            .getElementById("close-dialog-btn")
+            .addEventListener("click", () => invite_dialog.close());
+        </script>
+
+        <style>
+          .invite-dialog-container {
+            margin-left: auto; /* push to far right */
+            display: flex;
+            align-items: center; /* vertical centering */
+          }
+
+          /* --- Dialog Backdrop --- */
+          dialog::backdrop {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+          }
+
+          /* --- Dialog Container --- */
+          dialog {
+            background: rgba(15, 15, 15, 0.85);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 420px;
+
+            box-shadow:
+              0 30px 60px rgba(0, 0, 0, 0.7),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+            backdrop-filter: blur(20px);
+            animation: fadeIn 0.25s ease;
+          }
+
+          /* --- Dialog Typography --- */
+          dialog h2 {
+            margin: 0 0 12px 0;
+            font-size: 1.4rem;
+            font-weight: 800;
+          }
+
+          dialog p {
+            margin: 0 0 12px 0;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.5;
+            word-break: break-all;
+          }
+
+          /* --- Dialog Buttons --- */
+          dialog button {
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 22px;
+            font-weight: 700;
+            cursor: pointer;
+            transition:
+              transform 0.1s,
+              filter 0.2s;
+          }
+
+          dialog button:hover {
+            filter: brightness(0.9);
+          }
+
+          dialog button:active {
+            transform: scale(0.96);
+          }
+
+          /* --- QR Code Styling --- */
+          #qrcode-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+          }
+          #qrcode {
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          }
+          #qrcode img {
+            display: block;
+          }
+
+          /* Optional secondary button style */
+          dialog .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+          }
+
+          /* --- Invite Button --- */
+          #open-dialog-btn {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
+
+            padding: 10px 22px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            box-shadow:
+              0 10px 25px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+            transition:
+              background 0.2s ease,
+              transform 0.1s ease,
+              box-shadow 0.2s ease;
+          }
+
+          /* Hover = subtle glow */
+          #open-dialog-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow:
+              0 15px 35px rgba(0, 0, 0, 0.55),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          }
+
+          /* Pressed */
+          #open-dialog-btn:active {
+            transform: scale(0.96);
+          }
+
+          /* Keyboard accessibility */
+          #open-dialog-btn:focus-visible {
+            outline: none;
+            box-shadow:
+              0 0 0 2px rgba(255, 255, 255, 0.4),
+              0 15px 35px rgba(0, 0, 0, 0.6);
+          }
+
+          /* --- User Role Labels --- */
+          .is-host-text,
+          .is-guest-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+
+            margin-bottom: 8px;
+            padding: 6px 14px;
+
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.06),
+              0 6px 16px rgba(0, 0, 0, 0.35);
+          }
+
+          /* --- Host --- */
+          .is-host-text {
+            background: linear-gradient(
+              135deg,
+              rgba(255, 215, 0, 0.25),
+              rgba(255, 180, 0, 0.15)
+            );
+            color: rgba(255, 230, 150, 0.95);
+          }
+
+          /* --- Guest --- */
+          .is-guest-text {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.85);
+          }
+        </style>
       </div>
     </header>
 
