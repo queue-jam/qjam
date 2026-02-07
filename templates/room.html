@@ -4,8 +4,11 @@
     <meta charset="UTF-8" />
     <title>Stream Aggregator</title>
     <link rel="icon" href="/static/M.ico" type="image/x-icon">
+    
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="http://SortableJS.github.io/Sortable/Sortable.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
       rel="stylesheet"
@@ -614,9 +617,13 @@
         <button id="open-dialog-btn">Invite</button>
 
         <dialog id="invite-dialog">
-          <h2>Invite friends to your room!</h2>
-          <p><b>Code:</b> {{ room.session_id }}</p>
+          <h2>Invite friends!</h2>
+          <p><b>Code:</b> <span style="font-family: monospace; font-size: 1.1em;">{{ room.session_id }}</span></p>
 
+          <div id="qrcode-wrapper">
+             <div id="qrcode"></div>
+          </div>
+          
           <div id="user-list-container">
             {% for user in room.users %} {% if user.host %}
             <span class="is-host-text">{{ user.name }} (host)</span>
@@ -631,10 +638,28 @@
 
         <script>
           const invite_dialog = document.getElementById("invite-dialog");
+          const qrContainer = document.getElementById("qrcode");
 
           document
             .getElementById("open-dialog-btn")
-            .addEventListener("click", () => invite_dialog.showModal());
+            .addEventListener("click", () => {
+              invite_dialog.showModal();
+              
+              // Generate QR only if not already generated
+              if (qrContainer.innerHTML.trim() === "") {
+                 // Constructs: http://host:port/join?code=SESSION_ID
+                 const joinUrl = `${window.location.origin}/join?code={{ room.session_id }}`;
+
+                 new QRCode(qrContainer, {
+                    text: joinUrl,
+                    width: 160,
+                    height: 160,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+              }
+            });
 
           document
             .getElementById("close-dialog-btn")
@@ -706,6 +731,22 @@
 
           dialog button:active {
             transform: scale(0.96);
+          }
+          
+          /* --- QR Code Styling --- */
+          #qrcode-wrapper {
+             display: flex;
+             justify-content: center;
+             margin: 20px 0;
+          }
+          #qrcode {
+             padding: 15px;
+             background: white;
+             border-radius: 12px;
+             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+          }
+          #qrcode img {
+             display: block;
           }
 
           /* Optional secondary button style */

@@ -1,16 +1,18 @@
 import logging
 import uuid
-from typing import Any
+from typing import Any, List, Dict
 
 import yt_dlp
 from fastapi import FastAPI, Form, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from typing import List, Dict
-from backend.types import Room, Song, User
 
-from .types import Room, Song, User
+# Assuming your types are in a local module
+try:
+    from backend.types import Room, Song, User
+except ImportError:
+    from .types import Room, Song, User
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,11 +55,41 @@ def read_root(request: Request):
 
     return response
 
+# --- UPDATED: Uses templates/join.html ---
+@app.get("/join", response_class=HTMLResponse)
+def get_join_page(request: Request, code: str):
+    """
+    Serves the 'Enter Name' page when a user scans the QR code.
+    Ensures they get a user_id cookie if they are new.
+    """
+    user_id = request.cookies.get("user_id")
+    new_cookie = None
+    if not user_id:
+        user_id = uuid.uuid4().hex
+        new_cookie = user_id
+    
+    response = templates.TemplateResponse("join.html", {"request": request, "code": code})
+    
+    if new_cookie:
+        response.set_cookie(key="user_id", value=new_cookie, httponly=True)
+        
+    return response
+
 @app.post("/play", response_class=HTMLResponse)
 async def play_stream(request: Request):
     session_id = request.cookies.get("session_id")
+    user_id = request.cookies.get("user_id")
+
+    if not session_id or not user_id:
+        return "<p style='color:red;'>Session or User missing.</p>"
+
     current_room = Room.get_room_from_session_id(session_id, rooms)
     
+    requesting_user = next((u for u in current_room.users if u.id == user_id), None)
+    
+    if not requesting_user or not requesting_user.host:
+        return "<p style='color:red; padding: 10px;'>Only the host can play songs.</p>"
+
     if not current_room.queue:
         return "<p style='padding: 20px; text-align: center; color: #aaa;'>Queue is empty.</p>"
 
@@ -66,7 +98,7 @@ async def play_stream(request: Request):
     await dequeue_song(
         session_id=session_id, 
         song_id=current_room.current_song.name,
-        dequeuer_id=request.cookies.get("user_id")
+        dequeuer_id=user_id
     )
 
     try:
@@ -106,9 +138,6 @@ async def remove_song_endpoint(request: Request, session_id: str, song_id: str):
     await dequeue_song(session_id=session_id, song_id=song_id, dequeuer_id=user_id)
     return HTMLResponse(content="", status_code=200)
 
-
-    
-    
 @app.post("/{session_id}/queue", response_class=HTMLResponse)
 async def add_to_queue(request: Request, session_id: str, url: str = Form(...)):
     """
@@ -159,8 +188,6 @@ def join_room(request: Request, session_id: str = Form(...), username: str = For
     response.set_cookie(key="session_id", value=current_room.session_id, httponly=True)
     
     return response
-    
-
 
 def create_room(host_id: str, host_name: str) -> Room:
     room: Room = Room(
@@ -185,10 +212,6 @@ async def queue_song(session_id: str, song_url: str, queuer_id: str) -> None:
 
     current_room = Room.get_room_from_session_id(session_id, rooms)
     queuer = User.get_user_from_id(queuer_id, current_room.users)
-
-    # FIXME
-    # if not queuer.host:
-    #     raise HTTPException(status_code=403, detail="Bad queue permissions")
 
     ydl_opts = {
         'quiet': True,      
@@ -236,8 +259,6 @@ async def get_queue_partial(request: Request, session_id: str):
         "partials/queue_items.html",
         {"request": request, "queue": queue},
     )
-
-
 
 def search_youtube(query: str):
     ydl_opts = {
@@ -331,8 +352,6 @@ def serialize_song(song: Song) -> dict:
         "added_by_id": song.added_by.id,
         "album_art": song.album_art,
     }
-
-
 
 async def broadcast_queue(session_id: str):
     """Helper to send the current queue AND now_playing to all connected clients."""
