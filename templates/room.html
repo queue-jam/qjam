@@ -2,13 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>Stream Aggregator</title>
-    <link rel="icon" href="/static/M.ico" type="image/x-icon">
-    
+    <link rel="icon" href="/static/M.ico" type="image/x-icon" />
+
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="http://SortableJS.github.io/Sortable/Sortable.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
+
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
       rel="stylesheet"
@@ -22,6 +26,12 @@
         --text-secondary: #aaaaaa;
         --player-height: 90px;
         --header-height: 80px;
+        --glass-bg: rgba(20, 20, 20, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
       }
 
       body {
@@ -32,11 +42,11 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
+        overflow: hidden; /* Desktop default */
         position: relative;
       }
 
-      /* --- NEW: AMBIENT BACKGROUND LAYER --- */
+      /* --- AMBIENT BACKGROUND --- */
       #ambient-background {
         position: fixed;
         top: 0;
@@ -45,17 +55,15 @@
         height: 100%;
         z-index: -1;
         pointer-events: none;
-        overflow: hidden;
       }
       #ambient-background img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        filter: blur(80px) brightness(0.4) saturate(1.5); /* The "Vibe" Effect */
-        transform: scale(1.2); /* Zoom in to hide blur edges */
+        filter: blur(80px) brightness(0.4) saturate(1.5);
+        transform: scale(1.2);
         transition: opacity 1s ease;
       }
-      /* Gradient overlay to ensure text is always readable */
       .vignette {
         position: absolute;
         inset: 0;
@@ -66,26 +74,38 @@
         );
       }
 
-      /* --- Header --- */
+      /* --- HEADER --- */
       header {
         height: var(--header-height);
         padding: 0 40px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        z-index: 20;
-        /* Glassmorphism */
+        justify-content: space-between;
+        z-index: 100;
         background: rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid var(--glass-border);
+        flex-shrink: 0;
+        gap: 20px;
       }
 
+      .header-controls-left,
+      .header-controls-right {
+        display: flex;
+        align-items: center;
+        z-index: 2;
+      }
+
+      /* --- SEARCH --- */
       .search-container {
         display: flex;
-        gap: 15px;
+        gap: 10px;
         width: 100%;
-        max-width: 600px;
-        position: relative;
+        max-width: 500px;
+        position: absolute; /* Absolute centering for desktop */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1;
       }
 
       .input-wrapper {
@@ -95,68 +115,60 @@
 
       input[type="text"] {
         width: 100%;
-        padding: 14px 24px;
-        border-radius: 30px; /* Pill shape */
+        padding: 12px 20px;
+        border-radius: 99px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         background: rgba(0, 0, 0, 0.5);
         color: white;
         font-size: 1rem;
         outline: none;
-        box-sizing: border-box;
         transition: all 0.2s;
+        -webkit-appearance: none;
       }
       input[type="text"]:focus {
         background: rgba(0, 0, 0, 0.8);
-        border-color: rgba(255, 255, 255, 0.3);
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        border-color: rgba(255, 255, 255, 0.4);
       }
 
-      /* Improved "Add" Button */
       .btn-add {
         background: white;
         color: black;
         border: none;
-        height: 46px; /* Match input height */
+        height: 100%;
         padding: 0 24px;
-        border-radius: 23px;
+        border-radius: 99px;
         font-weight: 700;
         cursor: pointer;
-        transition:
-          transform 0.1s,
-          filter 0.2s;
-      }
-      .btn-add:hover {
-        filter: brightness(0.9);
-      }
-      .btn-add:active {
-        transform: scale(0.95);
+        flex-shrink: 0;
       }
 
       #search-results {
         position: absolute;
-        top: 110%;
+        top: 115%;
         left: 0;
         right: 0;
         background: #1a1a1a;
         border-radius: 12px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
         list-style: none;
         padding: 0;
         margin: 0;
-        max-height: 400px;
+        max-height: 60vh;
         overflow-y: auto;
-        z-index: 100;
+        z-index: 1000;
+        border: 1px solid #333;
       }
       #search-results li {
-        padding: 12px 20px;
+        padding: 14px 20px;
         cursor: pointer;
         border-bottom: 1px solid #333;
+        font-size: 0.95rem;
       }
       #search-results li:hover {
         background: #333;
       }
 
-      /* --- SPLIT LAYOUT --- */
+      /* --- MAIN LAYOUT --- */
       main {
         flex: 1;
         display: flex;
@@ -164,15 +176,13 @@
         overflow: hidden;
         padding: 40px;
         gap: 60px;
-        max-width: 1400px;
+        max-width: 1600px;
         width: 100%;
         margin: 0 auto;
-        box-sizing: border-box;
       }
 
-      /* Left Column: Big Art & Main Info */
       .art-column {
-        flex: 1.2;
+        flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -185,8 +195,8 @@
         max-width: 450px;
         aspect-ratio: 1/1;
         background: rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+        border-radius: 20px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
         overflow: hidden;
         margin-bottom: 30px;
       }
@@ -196,36 +206,31 @@
         object-fit: cover;
       }
 
-      /* NEW: Main Info Typography */
       #main-info-area {
         text-align: center;
-        animation: fadeIn 0.5s ease;
       }
       #main-title {
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 800;
-        margin: 0 0 10px 0;
-        line-height: 1.2;
-        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        margin: 0 0 8px 0;
+        line-height: 1.1;
       }
       #main-artist {
-        font-size: 1.1rem;
-        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.6);
         margin: 0;
-        font-weight: 500;
       }
 
-      /* Right Column: Queue */
       .queue-column {
-        flex: 0.8;
+        flex: 1;
         display: flex;
         flex-direction: column;
-        background: rgba(0, 0, 0, 0.3); /* Slight darkening for readability */
+        background: var(--glass-bg);
         backdrop-filter: blur(20px);
-        border-radius: 20px;
-        padding: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        min-width: 300px;
+        border-radius: 24px;
+        padding: 24px;
+        border: 1px solid var(--glass-border);
+        min-width: 320px;
       }
 
       .queue-header {
@@ -233,16 +238,15 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       }
-
-      h3 {
+      .queue-header h3 {
         margin: 0;
-        color: var(--text-secondary);
-        font-size: 0.8rem;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
         text-transform: uppercase;
-        letter-spacing: 1.5px;
+        color: var(--text-secondary);
       }
 
       #queue-scroll-area {
@@ -250,46 +254,22 @@
         flex: 1;
         padding-right: 5px;
       }
-      #queue-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      /* Apply to items loaded via HTMX */
-      .queue-item {
-        display: flex;
-        align-items: center;
-        padding: 12px;
-        border-radius: 8px;
-        transition: background 0.2s;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      }
-      .queue-item:hover {
+      
+      .btn-play-top {
         background: rgba(255, 255, 255, 0.1);
-      }
-
-      /* --- Delete Button Style --- */
-      .btn-delete {
-        background: transparent;
         border: none;
-        color: #666;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.75rem;
         cursor: pointer;
-        padding: 8px;
-        border-radius: 50%;
-        margin-left: auto;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        transition: background 0.2s;
+      }
+      .btn-play-top:hover {
+        background: rgba(255, 255, 255, 0.2);
       }
 
-      .btn-delete:hover {
-        background: rgba(255, 59, 59, 0.15);
-        color: #ff4d4d;
-      }
-
-      /* --- Footer Player --- */
+      /* --- PLAYER BAR (Restored to Original Styling) --- */
       .player-bar {
         height: var(--player-height);
         background: rgba(10, 10, 10, 0.95);
@@ -300,28 +280,14 @@
         padding: 0 40px;
         z-index: 50;
       }
+      
       #player-container {
         width: 100%;
         display: flex;
         justify-content: center;
       }
 
-      /* Helper Classes */
-      .btn-secondary {
-        background: rgba(255, 255, 255, 0.1);
-        border: none;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-      .btn-secondary:hover {
-        background: rgba(255, 255, 255, 0.2);
-      }
-
-      /* Player Controls */
+      /* Original Player Controls Styling */
       input[type="range"] {
         -webkit-appearance: none;
         background: transparent;
@@ -370,15 +336,213 @@
         color: white;
       }
 
+      /* --- DIALOG & MENU STYLES (Restored) --- */
+      
+      /* Trigger Buttons */
+      #open-permissions-btn, #open-dialog-btn {
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 8px 18px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        cursor: pointer;
+        backdrop-filter: blur(12px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px rgba(0, 0, 0, 0.35);
+        transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+        white-space: nowrap;
+      }
+      
+      #open-permissions-btn:hover, #open-dialog-btn:hover {
+        background: rgba(255, 255, 255, 0.14);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 28px rgba(0, 0, 0, 0.45);
+      }
+      
+      #open-permissions-btn:active, #open-dialog-btn:active {
+        transform: scale(0.96);
+      }
+
+      /* Dialogs */
+      dialog {
+        background: rgba(15, 15, 15, 0.85);
+        color: var(--text-primary);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 32px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        animation: fadeIn 0.25s ease;
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(6px);
+      }
+      dialog h2 {
+        margin: 0 0 12px 0;
+        font-size: 1.4rem;
+        font-weight: 800;
+        text-align: center;
+      }
+      dialog p {
+        margin: 0 0 12px 0;
+        color: rgba(255, 255, 255, 0.75);
+        line-height: 1.5;
+        word-break: break-all;
+      }
+      dialog button.close-btn {
+        display: block;
+        margin: 20px auto 0 auto;
+        background: white;
+        color: black;
+        border: none;
+        border-radius: 24px;
+        padding: 10px 22px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.1s, filter 0.2s;
+      }
+      dialog button.close-btn:hover { filter: brightness(0.9); }
+      dialog button.close-btn:active { transform: scale(0.96); }
+
+      /* Permissions Text */
+      .can-queue-text, .can-order-queue-text, .can-play-text { color: #a8e6c1; text-shadow: 0 0 10px rgba(168, 230, 193, 0.2); }
+      .cannot-play-text { color: #ff9b9b; background: rgba(255, 80, 80, 0.08); border-color: rgba(255, 120, 120, 0.18); text-shadow: 0 0 10px rgba(255, 120, 120, 0.25); }
+      .is-host-text h2 { color: #9fe6b8; text-shadow: 0 0 18px rgba(159, 230, 184, 0.25); }
+      .is-guest-text h2 { color: rgba(255, 255, 255, 0.85); }
+      
+      #permissions-dialog span {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px; font-size: 0.9rem; font-weight: 600; letter-spacing: 0.2px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px);
+      }
+
+      /* Invite Badges */
+      .is-host-badge, .is-guest-badge {
+        display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; margin-right: 5px;
+        padding: 6px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.3px;
+        backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 16px rgba(0, 0, 0, 0.35);
+      }
+      .is-host-badge { background: linear-gradient(135deg, rgba(255, 215, 0, 0.25), rgba(255, 180, 0, 0.15)); color: rgba(255, 230, 150, 0.95); }
+      .is-guest-badge { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.85); }
+
+      /* =========================================
+         MOBILE OPTIMIZATION ( < 900px )
+         ========================================= */
+      @media (max-width: 900px) {
+        body {
+          height: 100%;
+          overflow-y: auto;
+          display: block;
+          padding-bottom: calc(var(--player-height) + 20px);
+        }
+
+        header {
+          height: auto;
+          min-height: 120px;
+          flex-wrap: wrap;
+          padding: 15px 20px;
+          background: rgba(0, 0, 0, 0.6);
+          position: sticky;
+          top: 0;
+        }
+
+        .header-controls-left, .header-controls-right {
+          flex: 1;
+          margin-bottom: 12px;
+        }
+        .header-controls-right {
+          justify-content: flex-end;
+        }
+
+        .search-container {
+          position: relative;
+          left: auto;
+          transform: none;
+          max-width: 100%;
+          order: 3;
+        }
+
+        main {
+          display: flex;
+          flex-direction: column;
+          height: auto;
+          overflow: visible;
+          padding: 20px;
+          gap: 25px;
+        }
+
+        .art-column {
+          flex-direction: row;
+          align-items: center;
+          justify-content: flex-start;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(10px);
+          padding: 15px;
+          border-radius: 16px;
+          gap: 15px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #now-playing-art {
+          width: 80px;
+          height: 80px;
+          margin-bottom: 0;
+          border-radius: 12px;
+          flex-shrink: 0;
+        }
+
+        #main-info-area {
+          text-align: left;
+          flex: 1;
+        }
+        #main-title {
+          font-size: 1.4rem;
+          margin-bottom: 4px;
+        }
+        #main-artist {
+          font-size: 1rem;
+        }
+
+        .queue-column {
+          background: transparent;
+          border: none;
+          backdrop-filter: none;
+          padding: 0;
+          overflow: visible;
+        }
+
+        #queue-list li {
+          background: rgba(20, 20, 20, 0.6);
+          backdrop-filter: blur(10px);
+          margin-bottom: 10px;
+          border-radius: 12px;
+          padding: 15px !important;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #queue-scroll-area {
+          overflow: visible;
+        }
+
+        /* Fixed player on mobile, but keeping the original visual style */
+        .player-bar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          width: 100%;
+          z-index: 200; /* Ensure it stays above mobile content */
+        }
+      }
+      
       @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
     </style>
   </head>
@@ -388,192 +552,19 @@
     </div>
 
     <header>
-      <div class="greet-permissions-container">
-        <button id="open-permissions-btn">Hi, {{ user.name }}!</button>
-        <dialog id="permissions-dialog">
-          {% if user.host %}
-          <span class="is-host-text"
-            ><h2>You are the host of the room!</h2></span
-          >
-          {% else %}
-          <span class="is-guest-text"
-            ><h2>You are a guest of the room!</h2></span
-          >
-          {% endif %}
-          <span class="can-queue-text">✅ You can queue songs</span>
-          <span class="can-order-queue-text"
-            >✅ You can change the queue order</span
-          >
-          {% if user.host %}
-          <span class="can-play-text">✅ You can play songs</span>
-          {% else %}
-          <span class="cannot-play-text">❌ You cannot play songs</span>
-          {% endif %}
-          <button id="close-permissions-btn">Close</button>
-        </dialog>
-        <script>
-          const permissions_dialog =
-            document.getElementById("permissions-dialog");
-
-          document
-            .getElementById("open-permissions-btn")
-            .addEventListener("click", () => permissions_dialog.showModal());
-
-          document
-            .getElementById("close-permissions-btn")
-            .addEventListener("click", () => permissions_dialog.close());
-        </script>
-        <style>
-          #open-permissions-btn {
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.9);
-
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 999px;
-
-            padding: 8px 18px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-
-            cursor: pointer;
-            backdrop-filter: blur(12px);
-
-            box-shadow:
-              inset 0 1px 0 rgba(255, 255, 255, 0.05),
-              0 8px 20px rgba(0, 0, 0, 0.35);
-
-            transition:
-              background 0.2s ease,
-              transform 0.1s ease,
-              box-shadow 0.2s ease;
-          }
-
-          #open-permissions-btn:hover {
-            background: rgba(255, 255, 255, 0.14);
-            box-shadow:
-              inset 0 1px 0 rgba(255, 255, 255, 0.08),
-              0 12px 28px rgba(0, 0, 0, 0.45);
-          }
-
-          #open-permissions-btn:active {
-            transform: scale(0.96);
-          }
-
-          #open-permissions-btn:focus-visible {
-            outline: none;
-            box-shadow:
-              0 0 0 2px rgba(255, 255, 255, 0.35),
-              0 12px 28px rgba(0, 0, 0, 0.5);
-          }
-
-          /* --- Permission Rows --- */
-          #permissions-dialog span {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-
-            margin-bottom: 12px;
-            padding: 10px 14px;
-
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-
-            font-size: 0.9rem;
-            font-weight: 600;
-            letter-spacing: 0.2px;
-
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-
-            backdrop-filter: blur(10px);
-          }
-
-          /* Remove extra space after last item */
-          #permissions-dialog span:last-of-type {
-            margin-bottom: 22px;
-          }
-
-          /* --- Host / Guest Messaging --- */
-          #permissions-dialog h2 {
-            margin: 0 0 5px 0;
-            font-size: 1.3rem;
-            font-weight: 800;
-            text-align: center;
-          }
-
-          /* --- Positive Permissions --- */
-          .can-queue-text,
-          .can-order-queue-text,
-          .can-play-text {
-            color: #a8e6c1;
-            text-shadow: 0 0 10px rgba(168, 230, 193, 0.2);
-          }
-
-          /* --- Negative Permission --- */
-          .cannot-play-text {
-            color: #ff9b9b;
-            background: rgba(255, 80, 80, 0.08);
-            border-color: rgba(255, 120, 120, 0.18);
-
-            text-shadow: 0 0 10px rgba(255, 120, 120, 0.25);
-          }
-
-          .is-host-text,
-          .is-guest-text {
-            display: block;
-            justify-content: center; /* horizontal */
-            text-align: center;
-            margin-bottom: 16px;
-          }
-
-          /* Host = subtle positive glow */
-          .is-host-text h2 {
-            color: #9fe6b8;
-            text-shadow: 0 0 18px rgba(159, 230, 184, 0.25);
-          }
-
-          /* Guest = neutral / informational */
-          .is-guest-text h2 {
-            color: rgba(255, 255, 255, 0.85);
-          }
-
-          /* --- Dialog Button --- */
-          #permissions-dialog button {
-            display: block;
-            margin: 0 auto;
-
-            background: white;
-            color: black;
-
-            border: none;
-            border-radius: 24px;
-            padding: 10px 22px;
-
-            font-weight: 700;
-            cursor: pointer;
-
-            transition:
-              transform 0.1s ease,
-              filter 0.2s ease;
-          }
-
-          #permissions-dialog button:hover {
-            filter: brightness(0.9);
-          }
-
-          #permissions-dialog button:active {
-            transform: scale(0.96);
-          }
-        </style>
+      <div class="header-controls-left">
+        <button id="open-permissions-btn">
+          Hi, {{ user.name }}!
+        </button>
       </div>
+
       <div class="search-container">
         <div class="input-wrapper">
           <input
             type="text"
             id="url-input"
             name="query"
-            placeholder="Search for a song..."
+            placeholder="Search song..."
             autocomplete="off"
             hx-post="/search"
             hx-trigger="keyup changed delay:500ms"
@@ -584,289 +575,36 @@
         <form
           hx-post="/{{ room.session_id }}/queue"
           hx-target="#input-wrapper"
-          style="margin: 0"
+          style="margin: 0; display: flex;"
         >
           <input type="hidden" name="url" id="hidden-submission-url" />
           <button
             type="submit"
             class="btn-add"
-            onclick="
-      document.getElementById(
-        'hidden-submission-url',
-      ).value = document.getElementById('url-input').value
-      "
+            onclick="document.getElementById('hidden-submission-url').value = document.getElementById('url-input').value"
           >
             Add
           </button>
         </form>
-        <style>
-          .search-container {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-
-            display: flex;
-            gap: 15px;
-            width: 100%;
-            max-width: 600px;
-          }
-        </style>
       </div>
 
-      <div class="invite-dialog-container">
+      <div class="header-controls-right">
         <button id="open-dialog-btn">Invite</button>
-
-        <dialog id="invite-dialog">
-          <h2>Invite friends!</h2>
-          <p><b>Code:</b> <span style="font-family: monospace; font-size: 1.1em;">{{ room.session_id }}</span></p>
-
-          <div id="qrcode-wrapper">
-             <div id="qrcode"></div>
-          </div>
-          
-          <div id="user-list-container">
-            {% for user in room.users %} {% if user.host %}
-            <span class="is-host-text">{{ user.name }} (host)</span>
-            {% else %}
-            <span class="is-guest-text">{{ user.name }} (guest)</span>
-            {% endif %} {% endfor %}
-          </div>
-
-          <br />
-          <button id="close-dialog-btn">Close</button>
-        </dialog>
-
-        <script>
-          const invite_dialog = document.getElementById("invite-dialog");
-          const qrContainer = document.getElementById("qrcode");
-
-          document
-            .getElementById("open-dialog-btn")
-            .addEventListener("click", () => {
-              invite_dialog.showModal();
-              
-              // Generate QR only if not already generated
-              if (qrContainer.innerHTML.trim() === "") {
-                 // Constructs: http://host:port/join?code=SESSION_ID
-                 const joinUrl = `${window.location.origin}/join?code={{ room.session_id }}`;
-
-                 new QRCode(qrContainer, {
-                    text: joinUrl,
-                    width: 160,
-                    height: 160,
-                    colorDark : "#000000",
-                    colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H
-                });
-              }
-            });
-
-          document
-            .getElementById("close-dialog-btn")
-            .addEventListener("click", () => invite_dialog.close());
-        </script>
-
-        <style>
-          .invite-dialog-container {
-            margin-left: auto; /* push to far right */
-            display: flex;
-            align-items: center; /* vertical centering */
-          }
-
-          /* --- Dialog Backdrop --- */
-          dialog::backdrop {
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(6px);
-          }
-
-          /* --- Dialog Container --- */
-          dialog {
-            background: rgba(15, 15, 15, 0.85);
-            color: var(--text-primary);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 32px;
-            width: 100%;
-            max-width: 420px;
-
-            box-shadow:
-              0 30px 60px rgba(0, 0, 0, 0.7),
-              inset 0 1px 0 rgba(255, 255, 255, 0.05);
-
-            backdrop-filter: blur(20px);
-            animation: fadeIn 0.25s ease;
-          }
-
-          /* --- Dialog Typography --- */
-          dialog h2 {
-            margin: 0 0 12px 0;
-            font-size: 1.4rem;
-            font-weight: 800;
-          }
-
-          dialog p {
-            margin: 0 0 12px 0;
-            color: rgba(255, 255, 255, 0.75);
-            line-height: 1.5;
-            word-break: break-all;
-          }
-
-          /* --- Dialog Buttons --- */
-          dialog button {
-            background: white;
-            color: black;
-            border: none;
-            border-radius: 24px;
-            padding: 10px 22px;
-            font-weight: 700;
-            cursor: pointer;
-            transition:
-              transform 0.1s,
-              filter 0.2s;
-          }
-
-          dialog button:hover {
-            filter: brightness(0.9);
-          }
-
-          dialog button:active {
-            transform: scale(0.96);
-          }
-          
-          /* --- QR Code Styling --- */
-          #qrcode-wrapper {
-             display: flex;
-             justify-content: center;
-             margin: 20px 0;
-          }
-          #qrcode {
-             padding: 15px;
-             background: white;
-             border-radius: 12px;
-             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-          }
-          #qrcode img {
-             display: block;
-          }
-
-          /* Optional secondary button style */
-          dialog .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-          }
-
-          /* --- Invite Button --- */
-          #open-dialog-btn {
-            background: rgba(255, 255, 255, 0.12);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 999px;
-
-            padding: 10px 22px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 0.4px;
-
-            cursor: pointer;
-            backdrop-filter: blur(12px);
-            box-shadow:
-              0 10px 25px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.05);
-
-            transition:
-              background 0.2s ease,
-              transform 0.1s ease,
-              box-shadow 0.2s ease;
-          }
-
-          /* Hover = subtle glow */
-          #open-dialog-btn:hover {
-            background: rgba(255, 255, 255, 0.18);
-            box-shadow:
-              0 15px 35px rgba(0, 0, 0, 0.55),
-              inset 0 1px 0 rgba(255, 255, 255, 0.08);
-          }
-
-          /* Pressed */
-          #open-dialog-btn:active {
-            transform: scale(0.96);
-          }
-
-          /* Keyboard accessibility */
-          #open-dialog-btn:focus-visible {
-            outline: none;
-            box-shadow:
-              0 0 0 2px rgba(255, 255, 255, 0.4),
-              0 15px 35px rgba(0, 0, 0, 0.6);
-          }
-
-          /* --- User Role Labels --- */
-          .is-host-text,
-          .is-guest-text {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-
-            margin-bottom: 8px;
-            padding: 6px 14px;
-
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow:
-              inset 0 1px 0 rgba(255, 255, 255, 0.06),
-              0 6px 16px rgba(0, 0, 0, 0.35);
-          }
-
-          /* --- Host --- */
-          .is-host-text {
-            background: linear-gradient(
-              135deg,
-              rgba(255, 215, 0, 0.25),
-              rgba(255, 180, 0, 0.15)
-            );
-            color: rgba(255, 230, 150, 0.95);
-          }
-
-          /* --- Guest --- */
-          .is-guest-text {
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.85);
-          }
-        </style>
       </div>
-
-      <style>
-        header {
-          display: flex;
-          align-items: center;
-        }
-      </style>
     </header>
 
     <main>
       <div class="art-column">
         <div id="now-playing-art">
           <div
-            style="
-              width: 100%;
-              height: 100%;
-              background: rgba(255, 255, 255, 0.05);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
+            style="width: 100%; height: 100%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;"
           >
-            <span style="font-size: 60px; opacity: 0.2">🎵</span>
+            <span style="font-size: 40px; opacity: 0.2">🎵</span>
           </div>
         </div>
 
         <div id="main-info-area">
-          <h1 id="main-title">Ready to Play</h1>
+          <h1 id="main-title">Ready</h1>
           <h2 id="main-artist">Add a song to start</h2>
         </div>
       </div>
@@ -880,7 +618,9 @@
             hx-swap="innerHTML"
             style="margin: 0"
           >
-            <button type="submit" class="btn-secondary">▶ Play Top</button>
+            <button type="submit" class="btn-play-top">
+              ▶ Play Top
+            </button>
           </form>
         </div>
 
@@ -897,12 +637,75 @@
       </div>
     </div>
 
+    <dialog id="permissions-dialog">
+        {% if user.host %}
+        <span class="is-host-text"><h2>You are the host of the room!</h2></span>
+        {% else %}
+        <span class="is-guest-text"><h2>You are a guest of the room!</h2></span>
+        {% endif %}
+        
+        <span class="can-queue-text">✅ You can queue songs</span>
+        <span class="can-order-queue-text">✅ You can change the queue order</span>
+        
+        {% if user.host %}
+        <span class="can-play-text">✅ You can play songs</span>
+        {% else %}
+        <span class="cannot-play-text">❌ You cannot play songs</span>
+        {% endif %}
+        
+        <button id="close-permissions-btn" class="close-btn">Close</button>
+    </dialog>
+
+    <dialog id="invite-dialog">
+        <h2>Invite friends!</h2>
+        <p><b>Code:</b> <span style="font-family: monospace; font-size: 1.1em;">{{ room.session_id }}</span></p>
+
+        <div id="qrcode-wrapper" style="display: flex; justify-content: center; margin: 20px 0;">
+            <div id="qrcode" style="padding: 15px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></div>
+        </div>
+        
+        <div id="user-list-container">
+            {% for user in room.users %} 
+                {% if user.host %}
+                <span class="is-host-badge">{{ user.name }} (host)</span>
+                {% else %}
+                <span class="is-guest-badge">{{ user.name }} (guest)</span>
+                {% endif %} 
+            {% endfor %}
+        </div>
+
+        <br />
+        <button id="close-dialog-btn" class="close-btn">Close</button>
+    </dialog>
+
     <script>
+      // Dialog Logic
+      const permDialog = document.getElementById("permissions-dialog");
+      const inviteDialog = document.getElementById("invite-dialog");
+
+      document.getElementById("open-permissions-btn").onclick = () => permDialog.showModal();
+      document.getElementById("close-permissions-btn").onclick = () => permDialog.close();
+
+      document.getElementById("open-dialog-btn").onclick = () => {
+          inviteDialog.showModal();
+          const qrDiv = document.getElementById("qrcode");
+          if(qrDiv.innerHTML.trim() === "") {
+              new QRCode(qrDiv, {
+                  text: `${window.location.origin}/join?code={{ room.session_id }}`,
+                  width: 160,
+                  height: 160,
+                  colorDark : "#000000",
+                  colorLight : "#ffffff",
+                  correctLevel : QRCode.CorrectLevel.H
+              });
+          }
+      };
+      document.getElementById("close-dialog-btn").onclick = () => inviteDialog.close();
+
+      // WebSocket Logic
       const roomId = "{{ room.session_id }}";
-      
       const currentUserId = "{{ user.id }}";
       const isHost = {{ 'true' if user.host else 'false' }};
-      
       const queueList = document.getElementById("queue-list");
       const socket = new WebSocket(`ws://${window.location.host}/ws/${roomId}`);
 
@@ -914,13 +717,9 @@
       };
 
       async function deleteSong(songId) {
-        if(!confirm("Remove this song from queue?")) return;
-        
-        try {
-            await fetch(`/${roomId}/queue/${songId}`, { method: 'DELETE' });
-        } catch (err) {
-            console.error("Failed to delete song", err);
-        }
+        if(!confirm("Remove song?")) return;
+        try { await fetch(`/${roomId}/queue/${songId}`, { method: 'DELETE' }); }
+        catch (e) { console.error(e); }
       }
 
       function renderUsers(users) {
@@ -931,124 +730,71 @@
 
         users.forEach((user) => {
           const span = document.createElement("span");
-
           if (user.host) {
-            span.className = "is-host-text";
+            span.className = "is-host-badge"; 
             span.textContent = `${user.name} (host)`;
           } else {
-            span.className = "is-guest-text";
+            span.className = "is-guest-badge"; 
             span.textContent = `${user.name} (guest)`;
           }
-
           userContainer.appendChild(span);
         });
       }
 
       function renderNowPlaying(song) {
-        const artContainer = document.getElementById("now-playing-art");
-        const titleElement = document.getElementById("main-title");
-        const artistElement = document.getElementById("main-artist");
-        const backgroundElement = document.getElementById("ambient-background");
+        const artDiv = document.getElementById("now-playing-art");
+        const titleEl = document.getElementById("main-title");
+        const artistEl = document.getElementById("main-artist");
+        const bg = document.getElementById("ambient-background");
 
         if (!song) {
-          artContainer.innerHTML = `
-            <div style="width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
-            🎵
-            </div>`;
-
-          if (titleElement) titleElement.innerText = "No song playing";
-          if (artistElement) artistElement.innerText = "";
-
-          if (backgroundElement) {
-            backgroundElement.innerHTML = '<div class="vignette"></div>';
-          }
+          titleEl.innerText = "Ready";
+          artistEl.innerText = "Add a song to start";
+          artDiv.innerHTML = `<div style="width: 100%; height: 100%; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;"><span style="font-size: 30px; opacity: 0.3">🎵</span></div>`;
           return;
         }
 
+        titleEl.innerText = song.title;
+        artistEl.innerText = song.artist;
+
         if (song.album_art) {
-          artContainer.innerHTML = `
-            <img src="${song.album_art}" 
-            alt="Album Art" 
-            style="width: 100%; height: 100%; object-fit: cover;">`;
-        } else {
-          artContainer.innerHTML = `
-            <div style="width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
-            🎵
-            </div>`;
+           artDiv.innerHTML = `<img src="${song.album_art}" style="width:100%; height:100%; object-fit:cover;">`;
+           bg.innerHTML = `<img src="${song.album_art}"><div class="vignette"></div>`;
         }
-
-        if (backgroundElement) {
-          if (song.album_art) {
-            backgroundElement.innerHTML = `
-            <img src="${song.album_art}" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: -1;">
-            <div class="vignette"></div>
-            `;
-          } else {
-            backgroundElement.innerHTML = '<div class="vignette"></div>';
-          }
-        }
-
-        if (titleElement) titleElement.innerText = song.title;
-        if (artistElement) artistElement.innerText = song.artist;
       }
 
       function renderQueue(queue) {
         queueList.innerHTML = "";
-
-        queue.forEach((item) => {
+        queue.forEach(item => {
           const li = document.createElement("li");
-
-          li.style.cssText =
-            "display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); align-items: center;";
-
           li.dataset.id = item.id;
+          li.className = "queue-item";
+          li.style.cssText = "display: flex; gap: 15px; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);";
 
-          const canDelete = isHost || (item.added_by_id && item.added_by_id === currentUserId);
-
-          const deleteButtonHtml = canDelete ? `
-            <button onclick="deleteSong('${item.id}')" class="btn-delete" title="Remove Song">
-                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-          ` : '';
+          const canDelete = isHost || (item.added_by_id === currentUserId);
+          const delBtn = canDelete ? `<button class="btn-delete" onclick="deleteSong('${item.id}')" title="Remove">✕</button>` : '';
 
           li.innerHTML = `
-            <img src="${item.album_art || "https://placehold.co/60"}" 
-            alt="Cover"
-            style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; flex-shrink: 0;"/>
-
-            <div style="min-width: 0; display: flex; flex-direction: column; justify-content: center;">
-            <div style="font-weight: 600; font-size: 0.95rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${item.title}
+            <img src="${item.album_art || 'https://placehold.co/60'}" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;">
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.title}</div>
+                <div style="font-size: 0.85rem; color: #aaa;">${item.artist || 'Unknown'}</div>
+                <div style="font-size: 0.75rem; color: #666;">${item.added_by || 'System'}</div>
             </div>
-            <div style="font-size: 0.8em; color: #aaa;">
-                ${item.artist ?? "Unknown Artist"}
-            </div>
-            <div style="font-size: 0.7em; color: #666;">
-                Added by: ${item.added_by ?? "System"}
-            </div>
-            </div>
-            
-            ${deleteButtonHtml}
-            `;
-
+            ${delBtn}
+          `;
           queueList.appendChild(li);
         });
       }
-      
-      Sortable.create(queueList, {
-        animation: 150,
-        onEnd: () => {
-          const newOrder = Array.from(queueList.children).map(
-            (li) => li.dataset.id,
-          );
 
-          socket.send(
-            JSON.stringify({
-              type: "reorder",
-              order: newOrder,
-            }),
-          );
-        },
+      Sortable.create(queueList, {
+          animation: 150,
+          delay: 200, 
+          delayOnTouchOnly: true,
+          onEnd: () => {
+              const order = Array.from(queueList.children).map(li => li.dataset.id);
+              socket.send(JSON.stringify({ type: "reorder", order: order }));
+          }
       });
     </script>
   </body>
