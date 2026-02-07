@@ -1,932 +1,934 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <title>Stream Aggregator</title>
-        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
-            rel="stylesheet"
-        />
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stream Aggregator</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="http://SortableJS.github.io/Sortable/Sortable.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* --- CSS Reset & Variables --- */
+      :root {
+        --bg-color: #050505;
+        --text-primary: #ffffff;
+        --text-secondary: #aaaaaa;
+        --player-height: 90px;
+        --header-height: 80px;
+      }
+
+      body {
+        margin: 0;
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        font-family: "Inter", sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* --- NEW: AMBIENT BACKGROUND LAYER --- */
+      #ambient-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      #ambient-background img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: blur(80px) brightness(0.4) saturate(1.5); /* The "Vibe" Effect */
+        transform: scale(1.2); /* Zoom in to hide blur edges */
+        transition: opacity 1s ease;
+      }
+      /* Gradient overlay to ensure text is always readable */
+      .vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at center,
+          rgba(0, 0, 0, 0) 0%,
+          rgba(0, 0, 0, 0.8) 100%
+        );
+      }
+
+      /* --- Header --- */
+      header {
+        height: var(--header-height);
+        padding: 0 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 20;
+        /* Glassmorphism */
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .search-container {
+        display: flex;
+        gap: 15px;
+        width: 100%;
+        max-width: 600px;
+        position: relative;
+      }
+
+      .input-wrapper {
+        position: relative;
+        flex-grow: 1;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 14px 24px;
+        border-radius: 30px; /* Pill shape */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        font-size: 1rem;
+        outline: none;
+        box-sizing: border-box;
+        transition: all 0.2s;
+      }
+      input[type="text"]:focus {
+        background: rgba(0, 0, 0, 0.8);
+        border-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      }
+
+      /* Improved "Add" Button */
+      .btn-add {
+        background: white;
+        color: black;
+        border: none;
+        height: 46px; /* Match input height */
+        padding: 0 24px;
+        border-radius: 23px;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          filter 0.2s;
+      }
+      .btn-add:hover {
+        filter: brightness(0.9);
+      }
+      .btn-add:active {
+        transform: scale(0.95);
+      }
+
+      #search-results {
+        position: absolute;
+        top: 110%;
+        left: 0;
+        right: 0;
+        background: #1a1a1a;
+        border-radius: 12px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 100;
+      }
+      #search-results li {
+        padding: 12px 20px;
+        cursor: pointer;
+        border-bottom: 1px solid #333;
+      }
+      #search-results li:hover {
+        background: #333;
+      }
+
+      /* --- SPLIT LAYOUT --- */
+      main {
+        flex: 1;
+        display: flex;
+        height: calc(100vh - var(--header-height) - var(--player-height));
+        overflow: hidden;
+        padding: 40px;
+        gap: 60px;
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+        box-sizing: border-box;
+      }
+
+      /* Left Column: Big Art & Main Info */
+      .art-column {
+        flex: 1.2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 300px;
+      }
+
+      #now-playing-art {
+        width: 100%;
+        max-width: 450px;
+        aspect-ratio: 1/1;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+        margin-bottom: 30px;
+      }
+      #now-playing-art img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* NEW: Main Info Typography */
+      #main-info-area {
+        text-align: center;
+        animation: fadeIn 0.5s ease;
+      }
+      #main-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+        line-height: 1.2;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      }
+      #main-artist {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin: 0;
+        font-weight: 500;
+      }
+
+      /* Right Column: Queue */
+      .queue-column {
+        flex: 0.8;
+        display: flex;
+        flex-direction: column;
+        background: rgba(0, 0, 0, 0.3); /* Slight darkening for readability */
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        min-width: 300px;
+      }
+
+      .queue-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 15px;
+      }
+
+      h3 {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      #queue-scroll-area {
+        overflow-y: auto;
+        flex: 1;
+        padding-right: 5px;
+      }
+      #queue-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      /* Apply to items loaded via HTMX */
+      .queue-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        border-radius: 8px;
+        transition: background 0.2s;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .queue-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* --- Footer Player --- */
+      .player-bar {
+        height: var(--player-height);
+        background: rgba(10, 10, 10, 0.95);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        padding: 0 40px;
+        z-index: 50;
+      }
+      #player-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      /* Helper Classes */
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      /* Player Controls */
+      input[type="range"] {
+        -webkit-appearance: none;
+        background: transparent;
+        cursor: pointer;
+        height: 20px;
+      }
+      input[type="range"]:focus {
+        outline: none;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        background: rgba(255, 255, 255, 0.2);
+        height: 4px;
+        border-radius: 2px;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 12px;
+        width: 12px;
+        background: #fff;
+        border-radius: 50%;
+        margin-top: -4px;
+      }
+      .play-btn {
+        background: white;
+        border: none;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+      .play-btn:active {
+        transform: scale(0.95);
+      }
+      .icon-btn {
+        background: none;
+        border: none;
+        color: #aaa;
+        cursor: pointer;
+        padding: 8px;
+      }
+      .icon-btn:hover {
+        color: white;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="ambient-background">
+      <div class="vignette"></div>
+    </div>
+
+    <header>
+      <div class="greet-permissions-container">
+        <button id="open-permissions-btn">Hi, {{ user.name }}!</button>
+        <dialog id="permissions-dialog">
+          {% if user.host %}
+          <span class="is-host-text"
+            ><h2>You are the host of the room!</h2></span
+          >
+          {% else %}
+          <span class="is-guest-text"
+            ><h2>You are a guest of the room!</h2></span
+          >
+          {% endif %}
+          <span class="can-queue-text">✅ You can queue songs</span>
+          <span class="can-order-queue-text"
+            >✅ You can change the queue order</span
+          >
+          {% if user.host %}
+          <span class="can-play-text">✅ You can play songs</span>
+          {% else %}
+          <span class="cannot-play-text">❌ You cannot play songs</span>
+          {% endif %}
+          <button id="close-permissions-btn">Close</button>
+        </dialog>
+        <script>
+          const permissions_dialog =
+            document.getElementById("permissions-dialog");
+
+          document
+            .getElementById("open-permissions-btn")
+            .addEventListener("click", () => permissions_dialog.showModal());
+
+          document
+            .getElementById("close-permissions-btn")
+            .addEventListener("click", () => permissions_dialog.close());
+        </script>
+        <style>
+          #open-permissions-btn {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.9);
+
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.05),
+              0 8px 20px rgba(0, 0, 0, 0.35);
+
+            transition:
+              background 0.2s ease,
+              transform 0.1s ease,
+              box-shadow 0.2s ease;
+          }
+
+          #open-permissions-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.08),
+              0 12px 28px rgba(0, 0, 0, 0.45);
+          }
+
+          #open-permissions-btn:active {
+            transform: scale(0.96);
+          }
+
+          #open-permissions-btn:focus-visible {
+            outline: none;
+            box-shadow:
+              0 0 0 2px rgba(255, 255, 255, 0.35),
+              0 12px 28px rgba(0, 0, 0, 0.5);
+          }
+
+          /* --- Permission Rows --- */
+          #permissions-dialog span {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            margin-bottom: 12px;
+            padding: 10px 14px;
+
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+            backdrop-filter: blur(10px);
+          }
+
+          /* Remove extra space after last item */
+          #permissions-dialog span:last-of-type {
+            margin-bottom: 22px;
+          }
+
+          /* --- Host / Guest Messaging --- */
+          #permissions-dialog h2 {
+            margin: 0 0 5px 0;
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-align: center;
+          }
+
+          /* --- Positive Permissions --- */
+          .can-queue-text,
+          .can-order-queue-text,
+          .can-play-text {
+            color: #a8e6c1;
+            text-shadow: 0 0 10px rgba(168, 230, 193, 0.2);
+          }
+
+          /* --- Negative Permission --- */
+          .cannot-play-text {
+            color: #ff9b9b;
+            background: rgba(255, 80, 80, 0.08);
+            border-color: rgba(255, 120, 120, 0.18);
+
+            text-shadow: 0 0 10px rgba(255, 120, 120, 0.25);
+          }
+
+          .is-host-text,
+          .is-guest-text {
+            display: block;
+            justify-content: center; /* horizontal */
+            text-align: center;
+            margin-bottom: 16px;
+          }
+
+          /* Host = subtle positive glow */
+          .is-host-text h2 {
+            color: #9fe6b8;
+            text-shadow: 0 0 18px rgba(159, 230, 184, 0.25);
+          }
+
+          /* Guest = neutral / informational */
+          .is-guest-text h2 {
+            color: rgba(255, 255, 255, 0.85);
+          }
+
+          /* --- Dialog Button --- */
+          #permissions-dialog button {
+            display: block;
+            margin: 0 auto;
+
+            background: white;
+            color: black;
+
+            border: none;
+            border-radius: 24px;
+            padding: 10px 22px;
+
+            font-weight: 700;
+            cursor: pointer;
+
+            transition:
+              transform 0.1s ease,
+              filter 0.2s ease;
+          }
+
+          #permissions-dialog button:hover {
+            filter: brightness(0.9);
+          }
+
+          #permissions-dialog button:active {
+            transform: scale(0.96);
+          }
+        </style>
+      </div>
+      <div class="search-container">
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="url-input"
+            name="query"
+            placeholder="Search for a song..."
+            autocomplete="off"
+            hx-post="/search"
+            hx-trigger="keyup changed delay:500ms"
+            hx-target="#search-results"
+          />
+          <ul id="search-results" role="listbox"></ul>
+        </div>
+        <form
+          hx-post="/{{ room.session_id }}/queue"
+          hx-target="#input-wrapper"
+          style="margin: 0"
+        >
+          <input type="hidden" name="url" id="hidden-submission-url" />
+          <button
+            type="submit"
+            class="btn-add"
+            onclick="
+	    document.getElementById(
+	      'hidden-submission-url',
+	    ).value = document.getElementById('url-input').value
+	    "
+          >
+            Add
+          </button>
+        </form>
+        <style>
+          .search-container {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 600px;
+          }
+        </style>
+      </div>
+
+      <div class="invite-dialog-container">
+        <button id="open-dialog-btn">Invite</button>
+
+        <dialog id="invite-dialog">
+          <h2>Invite friends to your room!</h2>
+          <p><b>Code:</b> {{ room.session_id }}</p>
+
+          <div id="user-list-container">
+            {% for user in room.users %} {% if user.host %}
+            <span class="is-host-text">{{ user.name }} (host)</span>
+            {% else %}
+            <span class="is-guest-text">{{ user.name }} (guest)</span>
+            {% endif %} {% endfor %}
+          </div>
+
+          <br />
+          <button id="close-dialog-btn">Close</button>
+        </dialog>
+
+        <script>
+          const invite_dialog = document.getElementById("invite-dialog");
+
+          document
+            .getElementById("open-dialog-btn")
+            .addEventListener("click", () => invite_dialog.showModal());
+
+          document
+            .getElementById("close-dialog-btn")
+            .addEventListener("click", () => invite_dialog.close());
+        </script>
 
         <style>
-            /* --- CSS Reset & Variables --- */
-            :root {
-                --bg-color: #050505;
-                --text-primary: #ffffff;
-                --text-secondary: #aaaaaa;
-                --player-height: 90px;
-                --header-height: 80px;
-            }
+          .invite-dialog-container {
+            margin-left: auto; /* push to far right */
+            display: flex;
+            align-items: center; /* vertical centering */
+          }
 
-            body {
-                margin: 0;
-                background-color: var(--bg-color);
-                color: var(--text-primary);
-                font-family: "Inter", sans-serif;
-                height: 100vh;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                position: relative;
-            }
+          /* --- Dialog Backdrop --- */
+          dialog::backdrop {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+          }
 
-            /* --- NEW: AMBIENT BACKGROUND LAYER --- */
-            #ambient-background {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                z-index: -1;
-                pointer-events: none;
-                overflow: hidden;
-            }
-            #ambient-background img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                filter: blur(80px) brightness(0.4) saturate(1.5); /* The "Vibe" Effect */
-                transform: scale(1.2); /* Zoom in to hide blur edges */
-                transition: opacity 1s ease;
-            }
-            /* Gradient overlay to ensure text is always readable */
-            .vignette {
-                position: absolute;
-                inset: 0;
-                background: radial-gradient(
-                    circle at center,
-                    rgba(0, 0, 0, 0) 0%,
-                    rgba(0, 0, 0, 0.8) 100%
-                );
-            }
+          /* --- Dialog Container --- */
+          dialog {
+            background: rgba(15, 15, 15, 0.85);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 420px;
 
-            /* --- Header --- */
-            header {
-                height: var(--header-height);
-                padding: 0 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 20;
-                /* Glassmorphism */
-                background: rgba(0, 0, 0, 0.2);
-                backdrop-filter: blur(10px);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            }
+            box-shadow:
+              0 30px 60px rgba(0, 0, 0, 0.7),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
-            .search-container {
-                display: flex;
-                gap: 15px;
-                width: 100%;
-                max-width: 600px;
-                position: relative;
-            }
+            backdrop-filter: blur(20px);
+            animation: fadeIn 0.25s ease;
+          }
 
-            .input-wrapper {
-                position: relative;
-                flex-grow: 1;
-            }
+          /* --- Dialog Typography --- */
+          dialog h2 {
+            margin: 0 0 12px 0;
+            font-size: 1.4rem;
+            font-weight: 800;
+          }
 
-            input[type="text"] {
-                width: 100%;
-                padding: 14px 24px;
-                border-radius: 30px; /* Pill shape */
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                background: rgba(0, 0, 0, 0.5);
-                color: white;
-                font-size: 1rem;
-                outline: none;
-                box-sizing: border-box;
-                transition: all 0.2s;
-            }
-            input[type="text"]:focus {
-                background: rgba(0, 0, 0, 0.8);
-                border-color: rgba(255, 255, 255, 0.3);
-                box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            }
+          dialog p {
+            margin: 0 0 12px 0;
+            color: rgba(255, 255, 255, 0.75);
+            line-height: 1.5;
+            word-break: break-all;
+          }
 
-            /* Improved "Add" Button */
-            .btn-add {
-                background: white;
-                color: black;
-                border: none;
-                height: 46px; /* Match input height */
-                padding: 0 24px;
-                border-radius: 23px;
-                font-weight: 700;
-                cursor: pointer;
-                transition:
-                    transform 0.1s,
-                    filter 0.2s;
-            }
-            .btn-add:hover {
-                filter: brightness(0.9);
-            }
-            .btn-add:active {
-                transform: scale(0.95);
-            }
+          /* --- Dialog Buttons --- */
+          dialog button {
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 24px;
+            padding: 10px 22px;
+            font-weight: 700;
+            cursor: pointer;
+            transition:
+              transform 0.1s,
+              filter 0.2s;
+          }
 
-            #search-results {
-                position: absolute;
-                top: 110%;
-                left: 0;
-                right: 0;
-                background: #1a1a1a;
-                border-radius: 12px;
-                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-                list-style: none;
-                padding: 0;
-                margin: 0;
-                max-height: 400px;
-                overflow-y: auto;
-                z-index: 100;
-            }
-            #search-results li {
-                padding: 12px 20px;
-                cursor: pointer;
-                border-bottom: 1px solid #333;
-            }
-            #search-results li:hover {
-                background: #333;
-            }
+          dialog button:hover {
+            filter: brightness(0.9);
+          }
 
-            /* --- SPLIT LAYOUT --- */
-            main {
-                flex: 1;
-                display: flex;
-                height: calc(
-                    100vh - var(--header-height) - var(--player-height)
-                );
-                overflow: hidden;
-                padding: 40px;
-                gap: 60px;
-                max-width: 1400px;
-                width: 100%;
-                margin: 0 auto;
-                box-sizing: border-box;
-            }
+          dialog button:active {
+            transform: scale(0.96);
+          }
 
-            /* Left Column: Big Art & Main Info */
-            .art-column {
-                flex: 1.2;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                min-width: 300px;
-            }
+          /* Optional secondary button style */
+          dialog .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+          }
 
-            #now-playing-art {
-                width: 100%;
-                max-width: 450px;
-                aspect-ratio: 1/1;
-                background: rgba(255, 255, 255, 0.05);
-                border-radius: 12px;
-                box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
-                overflow: hidden;
-                margin-bottom: 30px;
-            }
-            #now-playing-art img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
+          /* --- Invite Button --- */
+          #open-dialog-btn {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 999px;
 
-            /* NEW: Main Info Typography */
-            #main-info-area {
-                text-align: center;
-                animation: fadeIn 0.5s ease;
-            }
-            #main-title {
-                font-size: 2rem;
-                font-weight: 800;
-                margin: 0 0 10px 0;
-                line-height: 1.2;
-                text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            }
-            #main-artist {
-                font-size: 1.1rem;
-                color: rgba(255, 255, 255, 0.7);
-                margin: 0;
-                font-weight: 500;
-            }
+            padding: 10px 22px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
 
-            /* Right Column: Queue */
-            .queue-column {
-                flex: 0.8;
-                display: flex;
-                flex-direction: column;
-                background: rgba(
-                    0,
-                    0,
-                    0,
-                    0.3
-                ); /* Slight darkening for readability */
-                backdrop-filter: blur(20px);
-                border-radius: 20px;
-                padding: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.05);
-                min-width: 300px;
-            }
+            cursor: pointer;
+            backdrop-filter: blur(12px);
+            box-shadow:
+              0 10px 25px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
-            .queue-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 20px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                padding-bottom: 15px;
-            }
+            transition:
+              background 0.2s ease,
+              transform 0.1s ease,
+              box-shadow 0.2s ease;
+          }
 
-            h3 {
-                margin: 0;
-                color: var(--text-secondary);
-                font-size: 0.8rem;
-                text-transform: uppercase;
-                letter-spacing: 1.5px;
-            }
+          /* Hover = subtle glow */
+          #open-dialog-btn:hover {
+            background: rgba(255, 255, 255, 0.18);
+            box-shadow:
+              0 15px 35px rgba(0, 0, 0, 0.55),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+          }
 
-            #queue-scroll-area {
-                overflow-y: auto;
-                flex: 1;
-                padding-right: 5px;
-            }
-            #queue-list {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
+          /* Pressed */
+          #open-dialog-btn:active {
+            transform: scale(0.96);
+          }
 
-            /* Apply to items loaded via HTMX */
-            .queue-item {
-                display: flex;
-                align-items: center;
-                padding: 12px;
-                border-radius: 8px;
-                transition: background 0.2s;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            }
-            .queue-item:hover {
-                background: rgba(255, 255, 255, 0.1);
-            }
+          /* Keyboard accessibility */
+          #open-dialog-btn:focus-visible {
+            outline: none;
+            box-shadow:
+              0 0 0 2px rgba(255, 255, 255, 0.4),
+              0 15px 35px rgba(0, 0, 0, 0.6);
+          }
 
-            /* --- Footer Player --- */
-            .player-bar {
-                height: var(--player-height);
-                background: rgba(10, 10, 10, 0.95);
-                backdrop-filter: blur(20px);
-                border-top: 1px solid rgba(255, 255, 255, 0.1);
-                display: flex;
-                align-items: center;
-                padding: 0 40px;
-                z-index: 50;
-            }
-            #player-container {
-                width: 100%;
-                display: flex;
-                justify-content: center;
-            }
+          /* --- User Role Labels --- */
+          .is-host-text,
+          .is-guest-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
 
-            /* Helper Classes */
-            .btn-secondary {
-                background: rgba(255, 255, 255, 0.1);
-                border: none;
-                color: white;
-                padding: 8px 16px;
-                border-radius: 20px;
-                font-size: 0.8rem;
-                cursor: pointer;
-                transition: background 0.2s;
-            }
-            .btn-secondary:hover {
-                background: rgba(255, 255, 255, 0.2);
-            }
+            margin-bottom: 8px;
+            padding: 6px 14px;
 
-            /* Player Controls */
-            input[type="range"] {
-                -webkit-appearance: none;
-                background: transparent;
-                cursor: pointer;
-                height: 20px;
-            }
-            input[type="range"]:focus {
-                outline: none;
-            }
-            input[type="range"]::-webkit-slider-runnable-track {
-                background: rgba(255, 255, 255, 0.2);
-                height: 4px;
-                border-radius: 2px;
-            }
-            input[type="range"]::-webkit-slider-thumb {
-                -webkit-appearance: none;
-                height: 12px;
-                width: 12px;
-                background: #fff;
-                border-radius: 50%;
-                margin-top: -4px;
-            }
-            .play-btn {
-                background: white;
-                border: none;
-                border-radius: 50%;
-                width: 45px;
-                height: 45px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition: transform 0.1s;
-            }
-            .play-btn:active {
-                transform: scale(0.95);
-            }
-            .icon-btn {
-                background: none;
-                border: none;
-                color: #aaa;
-                cursor: pointer;
-                padding: 8px;
-            }
-            .icon-btn:hover {
-                color: white;
-            }
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
 
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.06),
+              0 6px 16px rgba(0, 0, 0, 0.35);
+          }
+
+          /* --- Host --- */
+          .is-host-text {
+            background: linear-gradient(
+              135deg,
+              rgba(255, 215, 0, 0.25),
+              rgba(255, 180, 0, 0.15)
+            );
+            color: rgba(255, 230, 150, 0.95);
+          }
+
+          /* --- Guest --- */
+          .is-guest-text {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.85);
+          }
         </style>
-    </head>
-    <body>
-        <div id="ambient-background">
-            <div class="vignette"></div>
+      </div>
+
+      <style>
+        header {
+          display: flex;
+          align-items: center;
+        }
+      </style>
+    </header>
+
+    <main>
+      <div class="art-column">
+        <div id="now-playing-art">
+          <div
+            style="
+              width: 100%;
+              height: 100%;
+              background: rgba(255, 255, 255, 0.05);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <span style="font-size: 60px; opacity: 0.2">🎵</span>
+          </div>
         </div>
 
-        <header>
-            <div class="greet-permissions-container">
-                <button id="open-permissions-btn">Hi, {{ user.name }}!</button>
-                <dialog id="permissions-dialog">
-                    {% if user.host %}
-                    <span class="is-host-text"
-                        ><h2>You are the host of the room!</h2></span
-                    >
-                    {% else %}
-                    <span class="is-guest-text"
-                        ><h2>You are a guest of the room!</h2></span
-                    >
-                    {% endif %}
-                    <span class="can-queue-text">✅ You can queue songs</span>
-                    <span class="can-order-queue-text"
-                        >✅ You can change the queue order</span
-                    >
-                    {% if user.host %}
-                    <span class="can-play-text">✅ You can play songs</span>
-                    {% else %}
-                    <span class="cannot-play-text"
-                        >❌ You cannot play songs</span
-                    >
-                    {% endif %}
-                    <button id="close-permissions-btn">Close</button>
-                </dialog>
-                <script>
-                    const permissions_dialog =
-                        document.getElementById("permissions-dialog");
-
-                    document
-                        .getElementById("open-permissions-btn")
-                        .addEventListener("click", () =>
-                            permissions_dialog.showModal(),
-                        );
-
-                    document
-                        .getElementById("close-permissions-btn")
-                        .addEventListener("click", () =>
-                            permissions_dialog.close(),
-                        );
-                </script>
-                <style>
-                    #open-permissions-btn {
-                        background: rgba(255, 255, 255, 0.08);
-                        color: rgba(255, 255, 255, 0.9);
-
-                        border: 1px solid rgba(255, 255, 255, 0.12);
-                        border-radius: 999px;
-
-                        padding: 8px 18px;
-                        font-size: 0.85rem;
-                        font-weight: 600;
-                        letter-spacing: 0.3px;
-
-                        cursor: pointer;
-                        backdrop-filter: blur(12px);
-
-                        box-shadow:
-                            inset 0 1px 0 rgba(255, 255, 255, 0.05),
-                            0 8px 20px rgba(0, 0, 0, 0.35);
-
-                        transition:
-                            background 0.2s ease,
-                            transform 0.1s ease,
-                            box-shadow 0.2s ease;
-                    }
-
-                    #open-permissions-btn:hover {
-                        background: rgba(255, 255, 255, 0.14);
-                        box-shadow:
-                            inset 0 1px 0 rgba(255, 255, 255, 0.08),
-                            0 12px 28px rgba(0, 0, 0, 0.45);
-                    }
-
-                    #open-permissions-btn:active {
-                        transform: scale(0.96);
-                    }
-
-                    #open-permissions-btn:focus-visible {
-                        outline: none;
-                        box-shadow:
-                            0 0 0 2px rgba(255, 255, 255, 0.35),
-                            0 12px 28px rgba(0, 0, 0, 0.5);
-                    }
-
-                    /* --- Permission Rows --- */
-                    #permissions-dialog span {
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-
-                        margin-bottom: 12px;
-                        padding: 10px 14px;
-
-                        background: rgba(255, 255, 255, 0.025);
-                        border: 1px solid rgba(255, 255, 255, 0.08);
-                        border-radius: 14px;
-
-                        font-size: 0.9rem;
-                        font-weight: 600;
-                        letter-spacing: 0.2px;
-
-                        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-
-                        backdrop-filter: blur(10px);
-                    }
-
-                    /* Remove extra space after last item */
-                    #permissions-dialog span:last-of-type {
-                        margin-bottom: 22px;
-                    }
-
-                    /* --- Host / Guest Messaging --- */
-                    #permissions-dialog h2 {
-                        margin: 0 0 5px 0;
-                        font-size: 1.3rem;
-                        font-weight: 800;
-                        text-align: center;
-                    }
-
-                    /* --- Positive Permissions --- */
-                    .can-queue-text,
-                    .can-order-queue-text,
-                    .can-play-text {
-                        color: #a8e6c1;
-                        text-shadow: 0 0 10px rgba(168, 230, 193, 0.2);
-                    }
-
-                    /* --- Negative Permission --- */
-                    .cannot-play-text {
-                        color: #ff9b9b;
-                        background: rgba(255, 80, 80, 0.08);
-                        border-color: rgba(255, 120, 120, 0.18);
-
-                        text-shadow: 0 0 10px rgba(255, 120, 120, 0.25);
-                    }
-
-                    .is-host-text,
-                    .is-guest-text {
-                        display: block;
-                        justify-content: center; /* horizontal */
-                        text-align: center;
-                        margin-bottom: 16px;
-                    }
-
-                    /* Host = subtle positive glow */
-                    .is-host-text h2 {
-                        color: #9fe6b8;
-                        text-shadow: 0 0 18px rgba(159, 230, 184, 0.25);
-                    }
-
-                    /* Guest = neutral / informational */
-                    .is-guest-text h2 {
-                        color: rgba(255, 255, 255, 0.85);
-                    }
-
-                    /* --- Dialog Button --- */
-                    #permissions-dialog button {
-                        display: block;
-                        margin: 0 auto;
-
-                        background: white;
-                        color: black;
-
-                        border: none;
-                        border-radius: 24px;
-                        padding: 10px 22px;
-
-                        font-weight: 700;
-                        cursor: pointer;
-
-                        transition:
-                            transform 0.1s ease,
-                            filter 0.2s ease;
-                    }
-
-                    #permissions-dialog button:hover {
-                        filter: brightness(0.9);
-                    }
-
-                    #permissions-dialog button:active {
-                        transform: scale(0.96);
-                    }
-                </style>
-            </div>
-            <div class="search-container">
-                <div class="input-wrapper">
-                    <input
-                        type="text"
-                        id="url-input"
-                        name="query"
-                        placeholder="Search for a song..."
-                        autocomplete="off"
-                        hx-post="/search"
-                        hx-trigger="keyup changed delay:500ms"
-                        hx-target="#search-results"
-                    />
-                    <ul id="search-results" role="listbox"></ul>
-                </div>
-                <form
-                    hx-post="/{{ room.session_id }}/queue"
-                    hx-target="#input-wrapper"
-                    style="margin: 0"
-                >
-                    <input
-                        type="hidden"
-                        name="url"
-                        id="hidden-submission-url"
-                    />
-                    <button
-                        type="submit"
-                        class="btn-add"
-                        onclick="
-                            document.getElementById(
-                                'hidden-submission-url',
-                            ).value = document.getElementById('url-input').value
-                        "
-                    >
-                        Add
-                    </button>
-                </form>
-                <style>
-                    .search-container {
-                        position: absolute;
-                        left: 50%;
-                        transform: translateX(-50%);
-
-                        display: flex;
-                        gap: 15px;
-                        width: 100%;
-                        max-width: 600px;
-                    }
-                </style>
-            </div>
-            <div class="invite-dialog-container">
-                <button id="open-dialog-btn">Invite</button>
-                <dialog id="invite-dialog">
-                    <h2>Invite friends to your room!</h2>
-                    <p><b>Code:</b> {{ room.session_id }}</p>
-                    {% for user in room.users %} {% if user.host %}
-                    <span class="is-host-text">{{ user.name }} (host)</span>
-                    {% else %}
-                    <span class="is-guest-text">{{ user.name }} (guest)</span>
-                    {% endif %} {% endfor %}
-                    <br />
-                    <button id="close-dialog-btn">Close</button>
-                </dialog>
-                <script>
-                    const invite_dialog =
-                        document.getElementById("invite-dialog");
-
-                    document
-                        .getElementById("open-dialog-btn")
-                        .addEventListener("click", () =>
-                            invite_dialog.showModal(),
-                        );
-
-                    document
-                        .getElementById("close-dialog-btn")
-                        .addEventListener("click", () => invite_dialog.close());
-                </script>
-
-                <style>
-                    .invite-dialog-container {
-                        margin-left: auto; /* push to far right */
-                        display: flex;
-                        align-items: center; /* vertical centering */
-                    }
-
-                    /* --- Dialog Backdrop --- */
-                    dialog::backdrop {
-                        background: rgba(0, 0, 0, 0.75);
-                        backdrop-filter: blur(6px);
-                    }
-
-                    /* --- Dialog Container --- */
-                    dialog {
-                        background: rgba(15, 15, 15, 0.85);
-                        color: var(--text-primary);
-                        border: 1px solid rgba(255, 255, 255, 0.08);
-                        border-radius: 20px;
-                        padding: 32px;
-                        width: 100%;
-                        max-width: 420px;
-
-                        box-shadow:
-                            0 30px 60px rgba(0, 0, 0, 0.7),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-
-                        backdrop-filter: blur(20px);
-                        animation: fadeIn 0.25s ease;
-                    }
-
-                    /* --- Dialog Typography --- */
-                    dialog h2 {
-                        margin: 0 0 12px 0;
-                        font-size: 1.4rem;
-                        font-weight: 800;
-                    }
-
-                    dialog p {
-                        margin: 0 0 12px 0;
-                        color: rgba(255, 255, 255, 0.75);
-                        line-height: 1.5;
-                        word-break: break-all;
-                    }
-
-                    /* --- Dialog Buttons --- */
-                    dialog button {
-                        background: white;
-                        color: black;
-                        border: none;
-                        border-radius: 24px;
-                        padding: 10px 22px;
-                        font-weight: 700;
-                        cursor: pointer;
-                        transition:
-                            transform 0.1s,
-                            filter 0.2s;
-                    }
-
-                    dialog button:hover {
-                        filter: brightness(0.9);
-                    }
-
-                    dialog button:active {
-                        transform: scale(0.96);
-                    }
-
-                    /* Optional secondary button style */
-                    dialog .btn-secondary {
-                        background: rgba(255, 255, 255, 0.1);
-                        color: white;
-                    }
-
-                    /* --- Invite Button --- */
-                    #open-dialog-btn {
-                        background: rgba(255, 255, 255, 0.12);
-                        color: white;
-                        border: 1px solid rgba(255, 255, 255, 0.15);
-                        border-radius: 999px;
-
-                        padding: 10px 22px;
-                        font-size: 0.85rem;
-                        font-weight: 700;
-                        letter-spacing: 0.4px;
-
-                        cursor: pointer;
-                        backdrop-filter: blur(12px);
-                        box-shadow:
-                            0 10px 25px rgba(0, 0, 0, 0.4),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-
-                        transition:
-                            background 0.2s ease,
-                            transform 0.1s ease,
-                            box-shadow 0.2s ease;
-                    }
-
-                    /* Hover = subtle glow */
-                    #open-dialog-btn:hover {
-                        background: rgba(255, 255, 255, 0.18);
-                        box-shadow:
-                            0 15px 35px rgba(0, 0, 0, 0.55),
-                            inset 0 1px 0 rgba(255, 255, 255, 0.08);
-                    }
-
-                    /* Pressed */
-                    #open-dialog-btn:active {
-                        transform: scale(0.96);
-                    }
-
-                    /* Keyboard accessibility */
-                    #open-dialog-btn:focus-visible {
-                        outline: none;
-                        box-shadow:
-                            0 0 0 2px rgba(255, 255, 255, 0.4),
-                            0 15px 35px rgba(0, 0, 0, 0.6);
-                    }
-
-                    /* --- User Role Labels --- */
-                    .is-host-text,
-                    .is-guest-text {
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 8px;
-
-                        margin-bottom: 8px;
-                        padding: 6px 14px;
-
-                        border-radius: 999px;
-                        font-size: 0.8rem;
-                        font-weight: 700;
-                        letter-spacing: 0.3px;
-
-                        backdrop-filter: blur(10px);
-                        border: 1px solid rgba(255, 255, 255, 0.12);
-                        box-shadow:
-                            inset 0 1px 0 rgba(255, 255, 255, 0.06),
-                            0 6px 16px rgba(0, 0, 0, 0.35);
-                    }
-
-                    /* --- Host --- */
-                    .is-host-text {
-                        background: linear-gradient(
-                            135deg,
-                            rgba(255, 215, 0, 0.25),
-                            rgba(255, 180, 0, 0.15)
-                        );
-                        color: rgba(255, 230, 150, 0.95);
-                    }
-
-                    /* --- Guest --- */
-                    .is-guest-text {
-                        background: rgba(255, 255, 255, 0.08);
-                        color: rgba(255, 255, 255, 0.85);
-                    }
-                </style>
-            </div>
-            <style>
-                header {
-                    display: flex;
-                    align-items: center;
-                }
-            </style>
-        </header>
-
-        <main>
-            <div class="art-column">
-                <div id="now-playing-art">
-                    <div
-                        style="
-                            width: 100%;
-                            height: 100%;
-                            background: rgba(255, 255, 255, 0.05);
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                        "
-                    >
-                        <span style="font-size: 60px; opacity: 0.2">🎵</span>
-                    </div>
-                </div>
-
-                <div id="main-info-area">
-                    <h1 id="main-title">Ready to Play</h1>
-                    <h2 id="main-artist">Add a song to start</h2>
-                </div>
-            </div>
-
-            <div class="queue-column">
-                <div class="queue-header">
-                    <h3>Up Next</h3>
-                    <form
-                        hx-post="/play"
-                        hx-target="#player-container"
-                        hx-swap="innerHTML"
-                        style="margin: 0"
-                    >
-                        <button type="submit" class="btn-secondary">
-                            ▶ Play Top
-                        </button>
-                    </form>
-                </div>
-
-                <div id="queue-scroll-area">
-                    <ul
-                        id="queue-list"
-                        hx-get="/{{ room.session_id }}/queue"
-                        hx-trigger="every 2s"
-                        hx-swap="innerHTML"
-                    ></ul>
-                </div>
-                <div id="input-wrapper"></div>
-            </div>
-        </main>
-
-        <div class="player-bar">
-            <div id="player-container">
-                <div style="color: #666; font-size: 0.9rem">
-                    No music playing
-                </div>
-            </div>
+        <div id="main-info-area">
+          <h1 id="main-title">Ready to Play</h1>
+          <h2 id="main-artist">Add a song to start</h2>
         </div>
+      </div>
+
+      <div class="queue-column">
+        <div class="queue-header">
+          <h3>Up Next</h3>
+          <form
+            hx-post="/play"
+            hx-target="#player-container"
+            hx-swap="innerHTML"
+            style="margin: 0"
+          >
+            <button type="submit" class="btn-secondary">▶ Play Top</button>
+          </form>
+        </div>
+
+        <div id="queue-scroll-area">
+          <ul id="queue-list" hx-get="/{{ room.session_id }}/queue"></ul>
+        </div>
+        <div id="input-wrapper"></div>
+      </div>
+    </main>
+
+    <div class="player-bar">
+      <div id="player-container">
+        <div style="color: #666; font-size: 0.9rem">No music playing</div>
+      </div>
+    </div>
 
     <script>
-    const roomId = "{{ room.session_id }}";
-    const queueList = document.getElementById("queue-list");
+      const roomId = "{{ room.session_id }}";
+      const queueList = document.getElementById("queue-list");
 
-    const socket = new WebSocket(`ws://${window.location.host}/ws/${roomId}`);
+      const socket = new WebSocket(`ws://${window.location.host}/ws/${roomId}`);
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      renderQueue(data.queue);
-      renderNowPlaying(data.now_playing)
-    };
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        renderQueue(data.queue);
+        renderNowPlaying(data.now_playing);
+        renderUsers(data.users);
+      };
 
-    function renderNowPlaying(song) {
-      const artContainer = document.getElementById("now-playing-art");
-      const titleElement = document.getElementById("main-title");
-      const artistElement = document.getElementById("main-artist");
-      const backgroundElement = document.getElementById("ambient-background"); // <--- New
+      function renderUsers(users) {
+        const userContainer = document.getElementById("user-list-container");
+        if (!userContainer || !users) return;
 
-      if (!song) {
-	artContainer.innerHTML = `
+        userContainer.innerHTML = "";
+
+        users.forEach((user) => {
+          const span = document.createElement("span");
+
+          if (user.host) {
+            span.className = "is-host-text";
+            span.textContent = `${user.name} (host)`;
+          } else {
+            span.className = "is-guest-text";
+            span.textContent = `${user.name} (guest)`;
+          }
+
+          userContainer.appendChild(span);
+        });
+      }
+
+      function renderNowPlaying(song) {
+        const artContainer = document.getElementById("now-playing-art");
+        const titleElement = document.getElementById("main-title");
+        const artistElement = document.getElementById("main-artist");
+        const backgroundElement = document.getElementById("ambient-background"); // <--- New
+
+        if (!song) {
+          artContainer.innerHTML = `
 <div style="width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
   🎵
 </div>`;
 
-	if (titleElement) titleElement.innerText = "No song playing";
-	if (artistElement) artistElement.innerText = "";
+          if (titleElement) titleElement.innerText = "No song playing";
+          if (artistElement) artistElement.innerText = "";
 
-	if (backgroundElement) {
-	  backgroundElement.innerHTML = '<div class="vignette"></div>';
-	}
-	return;
-      }
+          if (backgroundElement) {
+            backgroundElement.innerHTML = '<div class="vignette"></div>';
+          }
+          return;
+        }
 
-
-      if (song.album_art) {
-	artContainer.innerHTML = `
+        if (song.album_art) {
+          artContainer.innerHTML = `
 <img src="${song.album_art}" 
   alt="Album Art" 
   style="width: 100%; height: 100%; object-fit: cover;">`;
-      } else {
-	artContainer.innerHTML = `
+        } else {
+          artContainer.innerHTML = `
 <div style="width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
   🎵
 </div>`;
-      }
+        }
 
-      if (backgroundElement) {
-	if (song.album_art) {
-	  backgroundElement.innerHTML = `
+        if (backgroundElement) {
+          if (song.album_art) {
+            backgroundElement.innerHTML = `
 <img src="${song.album_art}" style="width: 100%; height: 100%; object-fit: cover; position: absolute; z-index: -1;">
 <div class="vignette"></div>
 `;
-	} else {
-	  backgroundElement.innerHTML = '<div class="vignette"></div>';
-	}
+          } else {
+            backgroundElement.innerHTML = '<div class="vignette"></div>';
+          }
+        }
+
+        if (titleElement) titleElement.innerText = song.title;
+        if (artistElement) artistElement.innerText = song.artist;
       }
+      function renderQueue(queue) {
+        queueList.innerHTML = "";
 
-      if (titleElement) titleElement.innerText = song.title;
-      if (artistElement) artistElement.innerText = song.artist;
-    }
-    function renderQueue(queue) {
-      queueList.innerHTML = "";
+        queue.forEach((item) => {
+          const li = document.createElement("li");
 
-      queue.forEach(item => {
-	const li = document.createElement("li");
+          li.style.cssText =
+            "display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #333; align-items: center;";
 
-	li.style.cssText = "display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #333; align-items: center;";
+          li.dataset.id = item.id;
 
-	li.dataset.id = item.id;
-
-	li.innerHTML = `
-<img src="${item.album_art || 'https://placehold.co/60'}" 
+          li.innerHTML = `
+<img src="${item.album_art || "https://placehold.co/60"}" 
   alt="Cover"
   style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px; flex-shrink: 0; margin-right: 10px;"/>
 
@@ -945,22 +947,24 @@
 </div>
 `;
 
-	queueList.appendChild(li);
-      });
-    }
-    Sortable.create(queueList, {
-      animation: 150,
-      onEnd: () => {
-	const newOrder = Array.from(queueList.children).map(
-	  li => li.dataset.id
-	);
-
-	socket.send(JSON.stringify({
-	  type: "reorder",
-	  order: newOrder
-	}));
+          queueList.appendChild(li);
+        });
       }
-    });
+      Sortable.create(queueList, {
+        animation: 150,
+        onEnd: () => {
+          const newOrder = Array.from(queueList.children).map(
+            (li) => li.dataset.id,
+          );
+
+          socket.send(
+            JSON.stringify({
+              type: "reorder",
+              order: newOrder,
+            }),
+          );
+        },
+      });
     </script>
-    </body>
+  </body>
 </html>

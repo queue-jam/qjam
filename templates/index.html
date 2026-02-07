@@ -1,90 +1,141 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Stream Aggregator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --accent-color: #8b5cf6; /* Violet accent */
-            --text-primary: #ffffff;
-            --text-secondary: #a7a7a7;
-        }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .landing-card {
-            background: var(--surface-color);
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        h1 { margin-bottom: 2rem; font-size: 1.8rem; letter-spacing: -0.5px; }
-        .form-group { margin-bottom: 2rem; text-align: left; }
-        label { display: block; color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem; }
-        input {
-            width: 100%;
-            padding: 12px;
-            background: #2a2a2a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: white;
-            font-size: 1rem;
-            box-sizing: border-box; /* Fixes padding width issues */
-        }
-        input:focus { outline: none; border-color: var(--accent-color); }
-        button {
-            width: 100%;
-            padding: 12px;
-            background: var(--accent-color);
-            border: none;
-            border-radius: 25px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        button:hover { filter: brightness(1.1); }
-        button:active { transform: scale(0.98); }
-        .divider { margin: 2rem 0; border-top: 1px solid #333; position: relative; }
-        .divider span { 
-            position: absolute; top: -10px; left: 50%; transform: translateX(-50%); 
-            background: var(--surface-color); padding: 0 10px; color: var(--text-secondary); font-size: 0.8rem;
-        }
+      :root {
+        --bg-color: #121212;
+        --surface-color: #1e1e1e;
+        --accent-color: #8b5cf6; /* Violet accent */
+        --text-primary: #ffffff;
+        --text-secondary: #a7a7a7;
+      }
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        font-family: "Inter", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .landing-card {
+        background: var(--surface-color);
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+      }
+      h1 {
+        margin-bottom: 2rem;
+        font-size: 1.8rem;
+        letter-spacing: -0.5px;
+      }
+      .form-group {
+        margin-bottom: 2rem;
+        text-align: left;
+      }
+      label {
+        display: block;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+      input {
+        width: 100%;
+        padding: 12px;
+        background: #2a2a2a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        color: white;
+        font-size: 1rem;
+        box-sizing: border-box; /* Fixes padding width issues */
+      }
+      input:focus {
+        outline: none;
+        border-color: var(--accent-color);
+      }
+      button {
+        width: 100%;
+        padding: 12px;
+        background: var(--accent-color);
+        border: none;
+        border-radius: 25px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.1s;
+      }
+      button:hover {
+        filter: brightness(1.1);
+      }
+      button:active {
+        transform: scale(0.98);
+      }
+      .divider {
+        margin: 2rem 0;
+        border-top: 1px solid #333;
+        position: relative;
+      }
+      .divider span {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--surface-color);
+        padding: 0 10px;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+      }
     </style>
-</head>
-<body>
-    
+  </head>
+  <body>
     <div class="landing-card">
-        <h1>Stream Aggregator</h1>
+      <h1>Stream Aggregator</h1>
 
-        <form action="/room" method="post" class="form-group">
-            <label for="host-username">Host a Room</label>
-            <input type="text" id="host-username" name="username" placeholder="Enter your name" required>
-            <button type="submit" style="margin-top: 1rem;">Start Hosting</button>
-        </form>
+      <form action="/room" method="post" class="form-group">
+        <label for="host-username">Host a Room</label>
+        <input
+          type="text"
+          id="host-username"
+          name="username"
+          placeholder="Enter your name"
+          required
+        />
+        <button type="submit" style="margin-top: 1rem">Start Hosting</button>
+      </form>
 
-        <div class="divider"><span>OR</span></div>
+      <div class="divider"><span>OR</span></div>
 
-        <form action="/join" method="post" class="form-group">
-            <label for="join-username">Join a Room</label>
-            <input type="text" id="join-username" name="username" placeholder="Your name" required style="margin-bottom: 0.5rem;">
-            <input type="text" id="session_id" name="session_id" placeholder="Room ID" required>
-            <button type="submit" style="margin-top: 1rem; background-color: #333;">Join Existing</button>
-        </form>
+      <form action="/join" method="post" class="form-group">
+        <label for="join-username">Join a Room</label>
+        <input
+          type="text"
+          id="join-username"
+          name="username"
+          placeholder="Your name"
+          required
+          style="margin-bottom: 0.5rem"
+        />
+        <input
+          type="text"
+          id="session_id"
+          name="session_id"
+          placeholder="Room ID"
+          required
+        />
+        <button type="submit" style="margin-top: 1rem; background-color: #333">
+          Join Existing
+        </button>
+      </form>
     </div>
-
-</body>
+  </body>
 </html>

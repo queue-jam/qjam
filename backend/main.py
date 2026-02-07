@@ -307,6 +307,13 @@ async def queue_ws(websocket: WebSocket, session_id: str):
             connections[session_id].remove(websocket)
 
 
+def serialize_user(user: User) -> dict:
+    return {
+        "id": user.id,
+        "name": user.name,
+        "host": user.host
+    }
+
 def serialize_song(song: Song) -> dict:
     return {
         "id": song.name,
@@ -324,18 +331,18 @@ async def broadcast_queue(session_id: str):
     room = Room.get_room_from_session_id(session_id, rooms)
     if not room: return
 
-    # 1. Serialize the list
     queue_data = [serialize_song(s) for s in room.queue]
-
-    # 2. Serialize the single song (check if it exists first)
+   
+    users = [serialize_user(u) for u in room.users]
+    if not users: return
     now_playing_song = None
     if room.current_song:
         now_playing_song = serialize_song(room.current_song)
 
-    # 3. Wrap them in a parent dictionary
     payload = {
         "queue": queue_data,
-        "now_playing": now_playing_song
+        "now_playing": now_playing_song,
+        "users": users
     }
 
     active_connections = connections.get(session_id, [])
