@@ -1,17 +1,9 @@
 import uuid
-from uuid import UUID
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException, status
+from room import Room
 
 app = FastAPI()
-
-
-class Room(BaseModel):
-    session_id: UUID
-    queue: list[str]
-    queue_index: int
-
 
 rooms: list[Room] = []
 
@@ -21,20 +13,27 @@ def read_root() -> dict[str, str]:
     return {"message": "FastAPI is up and running!"}
 
 
-@app.post("/new")
+@app.get("/new", status_code=status.HTTP_201_CREATED)
 def create_room() -> Room:
     room: Room = Room(session_id=uuid.uuid4().hex, queue=[], queue_index=-1)
     rooms.append(room)
     return room
 
 
-@app.post("/{session_id}")
-def delete_room(session_id: UUID) -> None:
-    for room in rooms:
-        if room.session_id == session_id:
-            rooms.remove(room)
-            return
-    raise HTTPException(status_code=404, detail="Item not found")
+# DO NOT MAKE THIS PUBLIC
+@app.get("/list", status_code=status.HTTP_200_OK)
+def list_rooms() -> list[Room]:
+    return rooms
+
+
+@app.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_room(session_id: str) -> None:
+    try:
+        rooms.remove(Room.get_room_from_session_id(session_id, rooms))
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Item not found")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Unknown server error")
 
 
 @app.get("/test/{get_num}")

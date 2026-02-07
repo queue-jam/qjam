@@ -1,0 +1,24 @@
+meta {
+  name: Delete Room
+  type: http
+  seq: 2
+}
+
+delete {
+  url: {{BASE_URL}}/:session_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  session_id: ad4d48b7575f4d9a8210135350ef6133
+}
+
+vars:pre-request {
+  session_id: ad4d48b7575f4d9a8210135350ef6133
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
