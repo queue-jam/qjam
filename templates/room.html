@@ -22,23 +22,26 @@
       <p>No audio playing.</p>
     </div>
 
+
+
     <h3>Current Queue</h3>
-    <ul id="queue-list" 
-        style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"
-        hx-get="/{{ room.session_id }}/queue" 
-        hx-trigger="every 2s" 
-        hx-swap="innerHTML">
+
+    <ul id="queue-list"
+      style="max-height: 300px; overflow-y: auto; list-style: none; padding: 0;"
+      hx-get="/{{ room.session_id }}/queue"
+      hx-trigger="every 2s"
+      hx-swap="innerHTML">
     </ul>
 
     <form hx-post="/{{ room.session_id }}/queue" hx-target="#input-wrapper" hx-swap="innerHTML">
       <label for="url">Add to Queue:</label>
       <div class="grid">
-        
-        <div id="input-wrapper">
-           <input type="text" name="url" placeholder="https://youtube.com/..." required>
-        </div>
 
-        <button type="submit">Queue</button>
+	<div id="input-wrapper">
+	  <input type="text" name="url" placeholder="https://youtube.com/..." required>
+	</div>
+
+	<button type="submit">Queue</button>
       </div>
     </form>
 

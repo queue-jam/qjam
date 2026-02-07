@@ -13,9 +13,12 @@ class User(BaseModel):
         raise ValueError(f"User ID '{id}' was not in known users")
 
 class Song(BaseModel):
-    name: str
+    name: str   
     yt_url: str
     added_by: User
+    title: str   
+    artist: str
+    album_art: str
 
     @classmethod
     def get_song_from_yt_url(cls, yt_url: str, songs: list["Song"]) -> "Song":

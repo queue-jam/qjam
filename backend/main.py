@@ -143,13 +143,41 @@ def delete_room(session_id: str) -> None:
 
 # @app.post("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
 def queue_song(session_id: str, song_url: str, queuer_id: str) -> None:
-    current_room: Room = Room.get_room_from_session_id(session_id, rooms)
 
-    queuer: User = User.get_user_from_id(queuer_id, current_room.users)
+    current_room = Room.get_room_from_session_id(session_id, rooms)
+    queuer = User.get_user_from_id(queuer_id, current_room.users)
+
     if not queuer.host:
         raise HTTPException(status_code=403, detail="Bad queue permissions")
 
-    song: Song = Song(name=uuid.uuid4().hex, yt_url=song_url, added_by=queuer)
+    ydl_opts = {
+        'quiet': True,      
+        'skip_download': True,
+        'noplaylist': True,  
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(song_url, download=False)
+            
+            title = info.get('title', 'Unknown Title')
+            artist = info.get('artist') or info.get('uploader', 'Unknown Artist')
+            thumbnail = info.get('thumbnail', None)
+            album = info.get('album', None)
+
+    except Exception as e:
+        print(f"Error extracting info: {e}")
+        raise HTTPException(status_code=400, detail="Could not fetch video metadata")
+
+    song = Song(
+        name=uuid.uuid4().hex,
+        title=title,         
+        artist=artist,      
+        album_art=thumbnail,
+        yt_url=song_url,
+        added_by=queuer
+    )
+    
     current_room.queue.append(song)
 
 # @app.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -170,3 +198,12 @@ def list_users(session_id: str) -> list[User]:
 def list_queue(session_id: str) -> list[Song]:
     current_room: Room = Room.get_room_from_session_id(session_id, rooms)
     return current_room.queue
+
+@app.get("/{session_id}/queue", response_class=HTMLResponse)
+async def get_queue_partial(request: Request, session_id: str):
+
+    queue = list_queue(session_id)
+    return templates.TemplateResponse(
+        "partials/queue_items.html",
+        {"request": request, "queue": queue},
+    )

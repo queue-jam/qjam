@@ -1,0 +1,22 @@
+{% for song in queue %}
+<li style="display: flex; gap: 10px; padding: 10px; border-bottom: 1px solid #333; align-items: center;">
+  
+  <img src="{{ song.album_art | safe }}"
+       alt="Cover"
+       style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px; flex-shrink: 0;"/>
+
+  <div style="min-width: 0;">
+    <div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+      {{ song.title }}
+    </div>
+    <div style="font-size: 0.8em; color: #888;">
+      {{ song.artist }}
+    </div>
+    <div style="font-size: 0.7em; color: #555;">
+      Added by: {{ song.added_by.name }}
+    </div>
+  </div>
+
+</li>
+{% endfor %}
+

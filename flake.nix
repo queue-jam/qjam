@@ -67,6 +67,7 @@
               python.pkgs.python-multipart
               pkgs.gh
               pkgs.tmux
+              pkgs.ffmpeg
             ];
           };
         }
