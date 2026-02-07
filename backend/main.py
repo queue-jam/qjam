@@ -65,7 +65,6 @@ def play_stream(request: Request):
     next_song = current_room.queue[0] 
     dequeue_song(session_id=session_id, song_url=next_song.yt_url, dequeuer_id=request.cookies.get("user_id"))
 
-
     try:
         direct_stream_url = get_audio_url(next_song.yt_url)
         logger.info(f"Fetched audio URL: {direct_stream_url}")
@@ -124,11 +123,18 @@ def jam_room(request: Request, username: str = Form(...)):
 
 @app.post("/join", response_class=HTMLResponse)
 def join_room(request: Request, session_id: str = Form(...), username: str = Form(...)):
+    user_id: str = request.cookies.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="No user ID found in cookies")
+    
+    current_room: Room = Room.get_room_from_session_id(session_id, rooms)
     response: Any = templates.TemplateResponse("room.html", {
         "request": request, 
-        "room": Room.get_room_from_session_id(session_id, rooms),
+        "room": current_room,
         "user_name": username,
     })
+    response.set_cookie(key="session_id", value=current_room.session_id, httponly=True)
+    
     return response
     
 
