@@ -75,18 +75,18 @@ def play_stream(request: Request, url: str = Form(...), session_id: str | None =
 
 
 @app.post("/{session_id}/queue", response_class=HTMLResponse)
-def submit_queue(request: Request, url: str = Form(...)):
+async def submit_queue(request: Request, session_id: str, url: str = Form(...)):
     """
     HTMX Endpoint: Adds song to queue.
+    Returns a fresh input field to reset the form.
     """
-    session_id = request.cookies.get("session_id")
     user_id = request.cookies.get("user_id")
-    if not session_id:
-        raise HTTPException(status_code=400, detail="No session ID found")
-    
-    logger.info(f"User {session_id} is playing {url}")
     
     queue_song(session_id=session_id, song_url=url, queuer_id=user_id)
+    
+    return """
+    <input type="text" name="url" placeholder="Song queued! Add another..." required>
+    """
 
 
 @app.post("/room", response_class=HTMLResponse)
