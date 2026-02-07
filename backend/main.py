@@ -311,7 +311,21 @@ async def queue_ws(websocket: WebSocket, session_id: str):
 
     connections.setdefault(session_id, []).append(websocket)
 
-    await websocket.send_json([serialize_song(s) for s in room.queue])
+    queue_data = [serialize_song(s) for s in room.queue]
+    users_data = [serialize_user(u) for u in room.users]
+    
+    now_playing_data = None
+    if room.current_song:
+        now_playing_data = serialize_song(room.current_song)
+
+    initial_payload = {
+        "queue": queue_data,
+        "now_playing": now_playing_data,
+        "users": users_data
+    }
+
+    await websocket.send_json(initial_payload)
+    
 
     try:
         while True:
@@ -333,7 +347,6 @@ async def queue_ws(websocket: WebSocket, session_id: str):
     except WebSocketDisconnect:
         if session_id in connections:
             connections[session_id].remove(websocket)
-
 
 def serialize_user(user: User) -> dict:
     return {
