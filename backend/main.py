@@ -128,6 +128,7 @@ def join_room(request: Request, session_id: str = Form(...), username: str = For
         raise HTTPException(status_code=400, detail="No user ID found in cookies")
     
     current_room: Room = Room.get_room_from_session_id(session_id, rooms)
+    current_room.users.append(User(id=user_id, name=username, host=False))
     response: Any = templates.TemplateResponse("room.html", {
         "request": request, 
         "room": current_room,
@@ -166,8 +167,9 @@ async def queue_song(session_id: str, song_url: str, queuer_id: str) -> None:
     current_room = Room.get_room_from_session_id(session_id, rooms)
     queuer = User.get_user_from_id(queuer_id, current_room.users)
 
-    if not queuer.host:
-        raise HTTPException(status_code=403, detail="Bad queue permissions")
+    # FIXME
+    # if not queuer.host:
+    #     raise HTTPException(status_code=403, detail="Bad queue permissions")
 
     ydl_opts = {
         'quiet': True,      
