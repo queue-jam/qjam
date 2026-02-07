@@ -21,7 +21,7 @@
   <div
     style="display: flex; align-items: center; gap: 15px; flex: 1; min-width: 0"
   >
-    <button id="play-pause-btn" class="play-btn">
+    <button id="play-pause-btn" class="play-btn" style="flex-shrink: 0">
       <svg
         id="icon-pause"
         width="18"
@@ -42,16 +42,19 @@
         <path d="M8 5v14l11-7z" />
       </svg>
     </button>
+    
     <button
       class="icon-btn"
       hx-post="/play"
       hx-target="#player-container"
       hx-swap="innerHTML"
+      style="flex-shrink: 0"
     >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
         <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
       </svg>
     </button>
+
     <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
       <div style="color: white; font-weight: 600; font-size: 0.9rem">
         {{ title }}
@@ -116,26 +119,6 @@
     />
   </div>
 </div>
-
-<!-- <div id="now-playing-art" hx-swap-oob="true"> -->
-<!--     {% if album_art %} -->
-<!--         <img src="{{ album_art | safe }}" alt="Album Art" style="width: 100%; height: 100%; object-fit: cover;"> -->
-<!--     {% else %} -->
-<!--         <div style="width: 100%; height: 100%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">🎵</div> -->
-<!--     {% endif %} -->
-<!-- </div> -->
-
-<!-- <div id="main-info-area" hx-swap-oob="true"> -->
-<!--     <h1 id="main-title">{{ title }}</h1> -->
-<!--     <h2 id="main-artist">{{ artist }}</h2> -->
-<!-- </div> -->
-
-<!-- <div id="ambient-background" hx-swap-oob="true"> -->
-<!--     {% if album_art %} -->
-<!--         <img src="{{ album_art | safe }}"> -->
-<!--     {% endif %} -->
-<!--     <div class="vignette"></div> -->
-<!-- </div> -->
 
 <script>
   (function () {
