@@ -66,6 +66,7 @@
               python.pkgs.pydantic
               python.pkgs.python-multipart
               pkgs.gh
+              pkgs.tmux
             ];
           };
         }

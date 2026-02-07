@@ -74,29 +74,20 @@ def play_stream(request: Request, url: str = Form(...), session_id: str | None =
     
 
 
-@app.post("/queue", response_class=HTMLResponse)
-def submit_queue(request: Request, url: str = Form(...), session_id: str | None = Cookie(default=None)):
+@app.post("/{session_id}/queue", response_class=HTMLResponse)
+def submit_queue(request: Request, url: str = Form(...)):
+    """
+    HTMX Endpoint: Adds song to queue.
+    """
+    session_id = request.cookies.get("session_id")
+    user_id = request.cookies.get("user_id")
     if not session_id:
         raise HTTPException(status_code=400, detail="No session ID found")
     
     logger.info(f"User {session_id} is playing {url}")
     
-    """
-    HTMX Endpoint: Returns an audio player fragment.
-    """
-    queue_song(session_id=session_id, song_url=url, queuer_id=request.cookies.get("user_id"))
-    try:
-        direct_stream_url = get_audio_url(url)
-        logger.info(f"Fetched audio URL: {direct_stream_url}")
-        
-        # Fix this to add to queue instead of playing immediately
-        # return templates.TemplateResponse(
-        #     "partials/player.html", 
-        #     {"request": request, "stream_url": direct_stream_url}
-        # )
-    except Exception as e:
-        logger.error(f"Error fetching audio: {e}")
-        return f"<p style='color:red'>Error fetching audio: {str(e)}</p>"
+    queue_song(session_id=session_id, song_url=url, queuer_id=user_id)
+
 
 @app.post("/room", response_class=HTMLResponse)
 def jam_room(request: Request, username: str = Form(...)):
@@ -124,7 +115,8 @@ def join_room(request: Request, session_id: str = Form(...), username: str = For
     response = templates.TemplateResponse("room.html", {
         "request": request, 
         "room": Room.get_room_from_session_id(session_id, rooms),
-        "user_name": username
+        "user_name": username,
+        "queue": queue
     })
 
     return response
@@ -184,7 +176,17 @@ def list_users(session_id: str) -> list[User]:
     current_room = Room.get_room_from_session_id(session_id, rooms)
     return current_room.users
 
-@app.get("/{session_id}/queue", status_code=status.HTTP_200_OK)
+# @app.get("/{session_id}/queue", status_code=status.HTTP_200_OK)
 def list_queue(session_id: str) -> list[Song]:
     current_room = Room.get_room_from_session_id(session_id, rooms)
     return current_room.queue
+
+@app.get("/{session_id}/queue", response_class=HTMLResponse)
+async def get_queue_partial(request: Request, session_id: str):
+    queue = list_queue(session_id) 
+    
+    html_content = ""
+    for song in queue:
+        html_content += f"<li>{song}</li>"
+        
+    return html_content
