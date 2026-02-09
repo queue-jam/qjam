@@ -1,5 +1,6 @@
 {% for song in queue %}
-<li class="queue-item">
+<li class="queue-item" data-id="{{ song.id }}" style="display: flex; gap: 15px; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative;">
+  
   <img
     src="{{ song.album_art | safe }}"
     alt="Cover"
@@ -8,7 +9,7 @@
       height: 48px;
       object-fit: cover;
       border-radius: 4px;
-      margin-right: 15px;
+      flex-shrink: 0;
     "
   />
 
@@ -26,11 +27,35 @@
       {{ song.title }}
     </div>
     <div style="font-size: 0.85rem; color: #aaa; margin-top: 4px">
-      {{ song.artist }} •
-      <span style="font-size: 0.75em; color: #666"
-        >Added by {{ song.added_by.name }}</span
-      >
+      {{ song.artist }}
+      <span style="font-size: 0.75em; color: #666; margin-left: 5px;">
+        {% if song.added_by.name %}
+            Added by {{ song.added_by.name }}
+        {% else %}
+            Added by {{ song.added_by }}
+        {% endif %}
+      </span>
     </div>
   </div>
+
+  {% if user.host or (song.added_by.id and song.added_by.id == user.id) or (song.added_by_id and song.added_by_id == user.id) %}
+  <button 
+      class="btn-delete" 
+      onclick="deleteSong('{{ song.id }}')" 
+      title="Remove"
+      style="
+        background: transparent; 
+        border: none; 
+        color: #666; 
+        font-size: 1.2rem; 
+        cursor: pointer; 
+        padding: 0 10px;
+        margin-left: auto;
+      "
+  >
+      ✕
+  </button>
+  {% endif %}
+
 </li>
 {% endfor %}

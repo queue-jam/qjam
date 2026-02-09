@@ -42,7 +42,7 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
-        overflow: hidden; /* Desktop default */
+        overflow: hidden;
         position: relative;
       }
 
@@ -102,7 +102,7 @@
         gap: 10px;
         width: 100%;
         max-width: 500px;
-        position: absolute; /* Absolute centering for desktop */
+        position: absolute;
         left: 50%;
         transform: translateX(-50%);
         z-index: 1;
@@ -269,7 +269,6 @@
         background: rgba(255, 255, 255, 0.2);
       }
 
-      /* --- PLAYER BAR (Restored to Original Styling) --- */
       .player-bar {
         height: var(--player-height);
         background: rgba(10, 10, 10, 0.95);
@@ -334,6 +333,27 @@
       }
       .icon-btn:hover {
         color: white;
+      }
+
+      .btn-delete {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+      }
+
+      .btn-delete:hover {
+        background: rgba(255, 50, 50, 0.1);
+        color: #ff5555;
       }
 
       /* --- DIALOG & MENU STYLES (Restored) --- */
@@ -477,6 +497,10 @@
           gap: 25px;
         }
 
+        .btn-delete {
+          font-size: 1.4rem;
+          padding: 10px;
+        }
         .art-column {
           flex-direction: row;
           align-items: center;
@@ -530,13 +554,12 @@
           overflow: visible;
         }
 
-        /* Fixed player on mobile, but keeping the original visual style */
         .player-bar {
           position: fixed;
           bottom: 0;
           left: 0;
           width: 100%;
-          z-index: 200; /* Ensure it stays above mobile content */
+          z-index: 200;
         }
       }
       
