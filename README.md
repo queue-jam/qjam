@@ -26,11 +26,7 @@ No one likes closed source software that requires barely works.
 
 Before installing, ensure you have the following:
 
-- Python 3.10+
-- Optional tooling (based on your preferred workflow):
-  - Docker
-  - Nix
-  - Virtual environment tooling (venv, pipx)
+- Nix
 
 ---
 
