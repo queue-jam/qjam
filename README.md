@@ -44,3 +44,7 @@ Before installing, ensure you have the following:
    ```bash
    nix develop
    ```
+
+Shepard Garrett - Garrett.145@wright.edu
+Nicholas Pontious - Pontious.4@wright.edu
+Blake Payne - Payne.199@wright.edu
